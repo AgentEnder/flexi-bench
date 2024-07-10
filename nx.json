@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "defaultBase": "master",
+  "nxCloudAccessToken": "MzA2ZTcxMWQtZWFiNS00YjQ1LWI2MmUtNTU5NDg0NTNmNjNmfHJlYWQtd3JpdGU=",
+  "targetDefaults": {
+    "build": {
+      "cache": true,
+      "inputs": ["{projectRoot}/src/**/*.ts"]
+    },
+    "test": {
+      "cache": true
+    },
+    "format": {
+      "cache": true
+    },
+    "format:check": {
+      "cache": true
+    }
+  }
+}

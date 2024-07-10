@@ -1,0 +1,30 @@
+{
+  "name": "easybench",
+  "version": "0.0.0-alpha.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -p tsconfig.json",
+    "format": "prettier --write src"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nx": "19.4.2"
+  },
+  "nx": {},
+  "dependencies": {
+    "@types/cli-progress": "^3.11.6",
+    "@types/node": "^20.14.10",
+    "cli-progress": "^3.12.0",
+    "prettier": "^3.3.2",
+    "typescript": "^5.5.3"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ]
+}
