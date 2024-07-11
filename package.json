@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc -p tsconfig.json",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "run:example": "ts-node ./benchmark.ts"
   },
   "author": "",
   "license": "ISC",
@@ -15,9 +16,9 @@
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
-    "nx": "19.4.2"
+    "nx": "19.4.2",
+    "ts-node": "^10.9.2"
   },
-  "nx": {},
   "dependencies": {
     "@types/cli-progress": "^3.11.6",
     "@types/node": "^20.14.10",
@@ -25,6 +26,7 @@
     "prettier": "^3.3.2",
     "typescript": "^5.5.3"
   },
+  "nx": {},
   "files": [
     "dist",
     "README.md",
