@@ -25,7 +25,11 @@ export interface ProgressContext {
   timeElapsed: number;
 }
 
-export interface Reporter {
+export interface BenchmarkReporter {
   progress?: (name: string, progress: number, context: ProgressContext) => void;
   report: (benchmark: Benchmark, results: Result[]) => void;
+}
+
+export interface SuiteReporter {
+  report: (results: Record<string, Result[]>) => void;
 }

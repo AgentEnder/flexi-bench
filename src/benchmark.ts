@@ -1,6 +1,6 @@
-import { ConsoleReporter } from './console-reporter';
+import { BenchmarkConsoleReporter } from './benchmark-console-reporter';
 import { Variation } from './variation';
-import { Reporter, Result } from './api-types';
+import { BenchmarkReporter, Result } from './api-types';
 import { ActionMethod } from './api-types';
 import { TeardownMethod } from './api-types';
 import { SetupMethod } from './api-types';
@@ -14,7 +14,7 @@ export class Benchmark {
 
   private iterations?: number;
   private timeout?: number;
-  private reporter: Reporter;
+  private reporter: BenchmarkReporter;
 
   constructor(
     public name: string,
@@ -24,7 +24,7 @@ export class Benchmark {
       action?: ActionMethod;
       iterations?: number;
       timeout?: number;
-      reporter?: Reporter;
+      reporter?: BenchmarkReporter;
     },
   ) {
     if (options?.action) {
@@ -42,7 +42,7 @@ export class Benchmark {
     if (options?.timeout) {
       this.timeout = options.timeout;
     }
-    this.reporter = options?.reporter || new ConsoleReporter();
+    this.reporter = options?.reporter || new BenchmarkConsoleReporter();
   }
 
   withVariation(
@@ -83,7 +83,7 @@ export class Benchmark {
     return this;
   }
 
-  withReporter(reporter: Reporter): this {
+  withReporter(reporter: BenchmarkReporter): this {
     this.reporter = reporter;
     return this;
   }
@@ -218,6 +218,7 @@ export class Benchmark {
     }
 
     this.reporter.report(this, results);
+    return results;
   }
 
   private validate() {

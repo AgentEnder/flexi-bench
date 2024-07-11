@@ -2,32 +2,22 @@ import { ExecSyncOptions, execSync } from 'child_process';
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-import { Benchmark, Variation } from './src/index';
+import { Benchmark, Suite, Variation } from './src/index';
 
-const ITERATIONS = 20;
+const ITERATIONS = 2;
 
 const execSyncOptions: ExecSyncOptions = {
   stdio: 'ignore',
   shell: true as any,
 };
 
-function addVariations(benchmark: Benchmark) {
-  benchmark.withVariations(
-    Variation.FromEnvironmentVariables([
-      ['NX_DAEMON', ['true', 'false']],
-      ['NX_ISOLATE_PLUGINS', ['true', 'false']],
-    ]),
-  );
-}
-
 /**
  * Benchmarks when the cache has already been warmed before any iterations.
  */
-async function warmCacheBenchmark() {
+function warmCacheBenchmark() {
   let benchmark = new Benchmark('Warm Cache Benchmark', {
     iterations: ITERATIONS,
   });
-  addVariations(benchmark);
   benchmark.withAction(() => {
     execSync(`npx nx show projects`, execSyncOptions);
   });
@@ -35,7 +25,7 @@ async function warmCacheBenchmark() {
     execSync(`npx nx reset`, execSyncOptions);
     execSync(`npx nx show projects`, execSyncOptions);
   });
-  await benchmark.run();
+  return benchmark;
 }
 
 /**
@@ -43,41 +33,39 @@ async function warmCacheBenchmark() {
  * In this case, the first iteration will do the majority of the work
  * to warm the cache.
  */
-async function coldCacheBenchmark() {
+function coldCacheBenchmark() {
   let benchmark = new Benchmark('Cold Cache Benchmark', {
     iterations: ITERATIONS,
   });
-  addVariations(benchmark);
   benchmark.withAction(() => {
     execSync(`npx nx show projects`, execSyncOptions);
   });
   benchmark.withSetup(() => {
     execSync(`npx nx reset`, execSyncOptions);
   });
-  await benchmark.run();
+  return benchmark;
 }
 
 /**
  * Benchmarks with killing the cache and daemon before each iteration.
  * This represents a scenario where the cache is not used at all.
  */
-async function noCacheBenchmark() {
+function noCacheBenchmark() {
   let benchmark = new Benchmark('No Cache Benchmark', {
     iterations: ITERATIONS,
   });
-  addVariations(benchmark);
   benchmark.withAction(() => {
     execSync(`npx nx reset`, execSyncOptions);
     execSync(`npx nx show projects`, execSyncOptions);
   });
-  await benchmark.run();
+  return benchmark;
 }
 
 /**
  * Benchmarks with a realistic cache scenario where the cache is used but one project
  * is changed between each iteration.
  */
-async function realisticCacheBenchmark() {
+function realisticCacheBenchmark() {
   const updatedFilePath = join(
     __dirname,
     'projects',
@@ -103,7 +91,6 @@ async function realisticCacheBenchmark() {
   let benchmark = new Benchmark('Realistic Cache Benchmark', {
     iterations: ITERATIONS,
   });
-  addVariations(benchmark);
   benchmark.withAction(() => {
     updateProject();
     execSync(`npx nx show projects`, execSyncOptions);
@@ -115,7 +102,18 @@ async function realisticCacheBenchmark() {
   benchmark.withTeardown(() => {
     unlinkSync(updatedFilePath);
   });
-  await benchmark.run();
+  return benchmark;
 }
 
-warmCacheBenchmark();
+new Suite('Cache Benchmark Suite')
+  .addBenchmark(warmCacheBenchmark())
+  .addBenchmark(coldCacheBenchmark())
+  .addBenchmark(noCacheBenchmark())
+  // .addBenchmark(realisticCacheBenchmark())
+  .addVariations(
+    Variation.FromEnvironmentVariables([
+      ['NX_DAEMON', ['true', 'false']],
+      ['NX_ISOLATE_PLUGINS', ['true', 'false']],
+    ]),
+  )
+  .run();

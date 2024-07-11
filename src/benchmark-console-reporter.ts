@@ -1,9 +1,9 @@
-import { Result, Reporter, ProgressContext } from './api-types';
+import { Result, BenchmarkReporter, ProgressContext } from './api-types';
 import { Benchmark } from './benchmark';
 
 import { SingleBar } from 'cli-progress';
 
-export class ConsoleReporter implements Reporter {
+export class BenchmarkConsoleReporter implements BenchmarkReporter {
   private bar = new SingleBar({
     format:
       'Running: {label}\n{bar} {percentage}% | {value}/{total} - ETA: {eta}s',

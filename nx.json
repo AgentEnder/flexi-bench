@@ -16,5 +16,10 @@
     "format:check": {
       "cache": true
     }
+  },
+  "release": {
+    "version": {
+      "preVersionCommand": "nx run-many -t build"
+    }
   }
 }
