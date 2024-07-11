@@ -1,3 +1,7 @@
+## 0.0.0-alpha.2 (2024-07-11)
+
+This was a version bump only, there were no code changes.
+
 ## 0.0.0-alpha.1 (2024-07-11)
 
 
