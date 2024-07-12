@@ -5,7 +5,7 @@
   "targetDefaults": {
     "build": {
       "cache": true,
-      "inputs": ["{projectRoot}/src/**/*.ts"]
+      "inputs": ["{projectRoot}/src/**/*.ts", "!{projectRoot}/src/**/*.spec.ts"]
     },
     "test": {
       "cache": true
