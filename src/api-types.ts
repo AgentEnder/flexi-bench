@@ -1,6 +1,7 @@
 import { Variation } from './variation';
 
 import { Benchmark } from './benchmark';
+import { Result } from './results';
 
 export type MaybePromise<T> = T | Promise<T>;
 export type SetupMethod = (variation: Variation) => MaybePromise<void>;
@@ -13,14 +14,6 @@ export type Action = ActionMethod | ActionCommand;
 export type EnvironmentVariableOptions =
   | readonly (readonly [key: string, values: readonly string[]])[]
   | [key: string, values: string[]][];
-
-export type Result = {
-  label: string;
-  min: number;
-  max: number;
-  average: number;
-  p95: number;
-};
 
 export interface ProgressContext {
   totalIterations?: number;

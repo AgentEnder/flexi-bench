@@ -1,14 +1,14 @@
-import { BenchmarkConsoleReporter } from './benchmark-console-reporter';
+import { BenchmarkConsoleReporter } from './reporters/benchmark-console-reporter';
 import { Variation } from './variation';
 import {
   TeardownMethod,
   SetupMethod,
   Action,
   BenchmarkReporter,
-  Result,
 } from './api-types';
 import { spawn } from 'child_process';
-import { isTypeReferenceNode } from 'typescript';
+import { calculateResultsFromDurations, Result } from './results';
+import { clearMeasures, getMeasures } from './performance-observer';
 
 export class Benchmark {
   private setupMethods: SetupMethod[] = [];
@@ -206,20 +206,20 @@ export class Benchmark {
       }
       process.env = oldEnv;
 
+      const result = calculateResultsFromDurations(variation.name, timings);
+
+      // PerformanceObserver needs a chance to flush
+      await new Promise((resolve) => setImmediate(resolve));
+      const measures = getMeasures();
+      for (const key in measures) {
+        result.subresults ??= [];
+        result.subresults.push(
+          calculateResultsFromDurations(key, measures[key]),
+        );
+      }
+      clearMeasures();
       // REPORT
-      const min = Math.min(...timings);
-      const max = Math.max(...timings);
-      const sum = timings.reduce((a, b) => a + b, 0);
-      const average = sum / timings.length;
-      const sortedTimings = [...timings].sort((a, b) => a - b);
-      const p95 = sortedTimings[Math.floor(sortedTimings.length * 0.95)];
-      results.push({
-        label: variation.name,
-        min,
-        max,
-        average,
-        p95,
-      });
+      results.push(result);
     }
 
     this.reporter.report(this, results);

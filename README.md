@@ -15,6 +15,8 @@ npm install --save-dev flexi-bench
 
 ## Usage
 
+### Basic Benchmarks
+
 More detailed documentation will come soon. For now, here is a simple example:
 
 ```javascript
@@ -44,6 +46,38 @@ const benchmark = new Benchmark('My Benchmark')
     // some action to benchmark
   });
 ```
+
+#### Commands
+
+If you are benchmarking simple commands, you can utilize a syntactic sugar method:
+
+```javascript
+const { Benchmark } = require('flexi-bench');
+
+const benchmark = new Benchmark('My Benchmark', {
+  iterations: 10,
+  action: 'echo "Hello, World!"',
+});
+
+await benchmark.run();
+```
+
+Utilizing the syntactic sugar also means that flexi-bench is aware that you are indeed running a command. This sounds obvious, but opens up some neat possibilities since we are running the command from within flexi-bench. For example, we can add variations based on tailoring CLI options which would not be possible if you ran your command directly using `child_process` methods on your own.
+
+```javascript
+const { Benchmark } = require('flexi-bench');
+
+const benchmark = new Benchmark('My Benchmark', {
+  iterations: 10,
+  action: 'echo',
+})
+  .withVariation('with argument', (v) => v.withArgument('Hello, Earth!'))
+  .withVariation('with argument', (v) => v.withArgument('Hello, Mars!'));
+
+await benchmark.run();
+```
+
+For more information on the simple command API, see the example: ./examples/simple-command.ts
 
 ### Suites
 
@@ -143,4 +177,8 @@ const suite = new Suite('My Suite')
 
 ## Examples
 
-- See ./benchmark.ts for the motivating example of running Nx commands with different environment variables.
+See examples folder.
+
+- ./examples/benchmark.ts is the motivation for this project. It benchmarks the performance of Nx commands with and without a daemon.
+- ./examples/performance-observer.ts is a simple example of how to use the PerformanceObserver API to measure the performance of a function.
+- ./examples/simple-command.ts demonstrates how to benchmark a simple command.

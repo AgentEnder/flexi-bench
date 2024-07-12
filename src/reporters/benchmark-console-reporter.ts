@@ -1,15 +1,18 @@
-import { Result, BenchmarkReporter, ProgressContext } from './api-types';
-import { Benchmark } from './benchmark';
+import { BenchmarkReporter, ProgressContext } from '../api-types';
+import { Benchmark } from '../benchmark';
 
 import { SingleBar } from 'cli-progress';
+import { Result } from '../results';
 
 export class BenchmarkConsoleReporter implements BenchmarkReporter {
-  private bar = new SingleBar({
+  public bar = new SingleBar({
     format:
-      'Running: {label}\n{bar} {percentage}% | {value}/{total} - ETA: {eta}s',
+      'Running variation {label}: {bar} {percentage}% | {value}/{total} - ETA: {eta}s',
     barCompleteChar: '\u2588',
     barIncompleteChar: '\u2591',
     hideCursor: true,
+    stopOnComplete: true,
+    clearOnComplete: true,
   });
 
   constructor() {}
@@ -19,14 +22,9 @@ export class BenchmarkConsoleReporter implements BenchmarkReporter {
       this.bar.start(context.totalIterations ?? 100, 0);
     }
     this.bar.update(context.completedIterations, { label: name });
-    process.stdout.moveCursor(0, -1);
-    // console.log(`Progress: ${name} ${Math.round(percent * 10000) / 100}%`);
   }
 
   report(benchmark: Benchmark, results: Result[]) {
-    this.bar.stop();
-    process.stdout.moveCursor(0, -1);
-    process.stdout.clearScreenDown();
     console.log(`Benchmark: ${benchmark.name}`);
     console.table(results);
   }
