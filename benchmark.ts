@@ -32,13 +32,13 @@ const warmCacheBenchmark = new Benchmark('Warm Cache Benchmark', {
  */
 const coldCacheBenchmark = new Benchmark('Cold Cache Benchmark', {
   iterations: ITERATIONS,
-})
-  .withAction(() => {
+  action: () => {
     execSync(`npx nx show projects`, execSyncOptions);
-  })
-  .withSetup(() => {
+  },
+  setup: () => {
     execSync(`npx nx reset`, execSyncOptions);
-  });
+  },
+});
 
 /**
  * Benchmarks with killing the cache and daemon before each iteration.

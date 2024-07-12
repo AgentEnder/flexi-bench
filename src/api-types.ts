@@ -5,7 +5,11 @@ import { Benchmark } from './benchmark';
 export type MaybePromise<T> = T | Promise<T>;
 export type SetupMethod = (variation: Variation) => MaybePromise<void>;
 export type TeardownMethod = (variation: Variation) => MaybePromise<void>;
+
 export type ActionMethod = (variation: Variation) => MaybePromise<void>;
+export type ActionCommand = string;
+export type Action = ActionMethod | ActionCommand;
+
 export type EnvironmentVariableOptions =
   | readonly (readonly [key: string, values: readonly string[]])[]
   | [key: string, values: string[]][];

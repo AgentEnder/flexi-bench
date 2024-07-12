@@ -1,14 +1,19 @@
 import { BenchmarkConsoleReporter } from './benchmark-console-reporter';
 import { Variation } from './variation';
-import { BenchmarkReporter, Result } from './api-types';
-import { ActionMethod } from './api-types';
-import { TeardownMethod } from './api-types';
-import { SetupMethod } from './api-types';
+import {
+  TeardownMethod,
+  SetupMethod,
+  Action,
+  BenchmarkReporter,
+  Result,
+} from './api-types';
+import { spawn } from 'child_process';
+import { isTypeReferenceNode } from 'typescript';
 
 export class Benchmark {
   private setupMethods: SetupMethod[] = [];
   private teardownMethods: TeardownMethod[] = [];
-  private action?: ActionMethod;
+  private action?: Action;
 
   public variations: Variation[] = [];
 
@@ -21,7 +26,7 @@ export class Benchmark {
     options?: {
       setup?: SetupMethod;
       teardown?: TeardownMethod;
-      action?: ActionMethod;
+      action?: Action;
       iterations?: number;
       timeout?: number;
       reporter?: BenchmarkReporter;
@@ -142,9 +147,9 @@ export class Benchmark {
         while (running) {
           const a = performance.now();
           if (variation.action) {
-            await variation.action(variation);
+            await runAction(variation.action, variation);
           } else if (this.action) {
-            await this.action(variation);
+            await runAction(this.action, variation);
           }
           const b = performance.now();
           const duration = b - a;
@@ -222,6 +227,19 @@ export class Benchmark {
   }
 
   private validate() {
+    const missingActions = [];
+    for (const variation of this.variations) {
+      let action = variation.action || this.action;
+      if (!action) {
+        missingActions.push(variation.name);
+        continue;
+      }
+      if (typeof action !== 'string' && variation.cliArgs.length > 0) {
+        throw new Error(
+          `Cannot use CLI args with a non-command action for ${this.name}:${variation.name}`,
+        );
+      }
+    }
     if (!this.action) {
       const missingActions = this.variations.filter((v) => !v.action);
       if (missingActions.length > 0) {
@@ -234,5 +252,25 @@ export class Benchmark {
         throw new Error(`Benchmark ${this.name} is missing an action`);
       }
     }
+  }
+}
+
+async function runAction(action: Action, variation: Variation) {
+  if (typeof action === 'string') {
+    return new Promise<void>((resolve, reject) => {
+      const child = spawn(action, variation.cliArgs, {
+        shell: true,
+        windowsHide: true,
+      });
+      child.on('exit', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(`Action failed with code ${code}`);
+        }
+      });
+    });
+  } else {
+    return action(variation);
   }
 }
