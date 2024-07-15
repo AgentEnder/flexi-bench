@@ -2,13 +2,25 @@
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "defaultBase": "master",
   "nxCloudAccessToken": "MzA2ZTcxMWQtZWFiNS00YjQ1LWI2MmUtNTU5NDg0NTNmNjNmfHJlYWQtd3JpdGU=",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"],
+    "production": [
+      "{projectRoot}/src/**/*.ts",
+      "!{projectRoot}/src/**/*.spec.ts"
+    ]
+  },
   "targetDefaults": {
     "build": {
       "cache": true,
-      "inputs": ["{projectRoot}/src/**/*.ts", "!{projectRoot}/src/**/*.spec.ts"]
+      "inputs": ["production", "^production", "!{workspaceRoot}/examples/**/*"]
+    },
+    "e2e": {
+      "cache": true,
+      "inputs": ["default", "^production", "{workspaceRoot}/examples/**/*"]
     },
     "test": {
-      "cache": true
+      "cache": true,
+      "inputs": ["default", "^production"]
     },
     "format": {
       "cache": true

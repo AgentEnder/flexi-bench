@@ -21,7 +21,7 @@ const markdownReporter = new MarkdownBenchmarkReporter({
 
 (async () => {
   await new Benchmark('Performance Observer Demo', {
-    iterations: 50,
+    iterations: 5,
     action: async () => {
       // The createProjectGraphAsync isn't tolerable to how we reset
       // the daemon client, so without this delay, the graph construction

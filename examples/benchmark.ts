@@ -2,7 +2,7 @@ import { ExecSyncOptions, execSync } from 'child_process';
 
 import { Benchmark, Suite, Variation } from '../src/index';
 
-const ITERATIONS = 15;
+const ITERATIONS = 3;
 
 const execSyncOptions: ExecSyncOptions = {
   stdio: 'ignore',
@@ -19,7 +19,10 @@ const warmCacheBenchmark = new Benchmark('Warm Cache Benchmark', {
     execSync(`npx nx show projects`, execSyncOptions);
   })
   .withSetup(() => {
-    execSync(`npx nx reset`, execSyncOptions);
+    execSync(
+      `npx nx reset --only-daemon --only-workspace-data`,
+      execSyncOptions,
+    );
     execSync(`npx nx show projects`, execSyncOptions);
   });
 
@@ -30,11 +33,12 @@ const warmCacheBenchmark = new Benchmark('Warm Cache Benchmark', {
  */
 const coldCacheBenchmark = new Benchmark('Cold Cache Benchmark', {
   iterations: ITERATIONS,
-  action: () => {
-    execSync(`npx nx show projects`, execSyncOptions);
-  },
+  action: `npx nx show projects`,
   setup: () => {
-    execSync(`npx nx reset`, execSyncOptions);
+    execSync(
+      `npx nx reset --only-daemon --only-workspace-data`,
+      execSyncOptions,
+    );
   },
 });
 
@@ -45,7 +49,7 @@ const coldCacheBenchmark = new Benchmark('Cold Cache Benchmark', {
 const noCacheBenchmark = new Benchmark('No Cache Benchmark', {
   iterations: ITERATIONS,
 }).withAction(() => {
-  execSync(`npx nx reset`, execSyncOptions);
+  execSync(`npx nx reset --only-daemon --only-workspace-data`, execSyncOptions);
   execSync(`npx nx show projects`, execSyncOptions);
 });
 
