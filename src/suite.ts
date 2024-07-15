@@ -1,6 +1,7 @@
-import { Result, SuiteReporter } from './api-types';
+import { SuiteReporter } from './api-types';
 import { Benchmark } from './benchmark';
-import { SuiteConsoleReporter } from './suite-console-reporter';
+import { SuiteConsoleReporter } from './reporters/suite-console-reporter';
+import { Result } from './results';
 import { Variation } from './variation';
 
 export interface SuiteOptions {

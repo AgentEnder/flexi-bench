@@ -1,4 +1,5 @@
-import { Result, SuiteReporter } from './api-types';
+import { SuiteReporter } from '../api-types';
+import { Result } from '../results';
 
 export class SuiteConsoleReporter implements SuiteReporter {
   report: (results: Record<string, Result[]>) => void = (results) => {
