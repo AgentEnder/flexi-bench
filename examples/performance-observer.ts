@@ -5,13 +5,8 @@ import {
   Benchmark,
   BenchmarkConsoleReporter,
   MarkdownBenchmarkReporter,
-  registerPerformanceObserver,
 } from '../src';
 import { join } from 'path';
-
-registerPerformanceObserver({
-  label: (name) => name.replace(/.*\/node_modules\/nx\/src\/plugins/, 'nx'),
-});
 
 const defaultReporter = new BenchmarkConsoleReporter();
 const markdownReporter = new MarkdownBenchmarkReporter({
@@ -34,6 +29,9 @@ const markdownReporter = new MarkdownBenchmarkReporter({
       report: markdownReporter.report.bind(markdownReporter),
     },
   })
+    .withPerformanceObserver({
+      label: (name) => name.replace(/.*\/node_modules\/nx\/src\/plugins/, 'nx'),
+    })
     .withVariation('With Daemon', (v) =>
       v
         // Nx read's the NX_DAEMON environment variable to determine

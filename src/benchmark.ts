@@ -8,7 +8,10 @@ import {
 } from './api-types';
 import { spawn } from 'child_process';
 import { calculateResultsFromDurations, Result } from './results';
-import { clearMeasures, getMeasures } from './performance-observer';
+import {
+  PerformanceObserverOptions,
+  PerformanceWatcher,
+} from './performance-observer';
 
 export class Benchmark {
   private setupMethods: SetupMethod[] = [];
@@ -20,6 +23,7 @@ export class Benchmark {
   private iterations?: number;
   private timeout?: number;
   private reporter: BenchmarkReporter;
+  private watcher?: PerformanceWatcher;
 
   constructor(
     public name: string,
@@ -90,6 +94,11 @@ export class Benchmark {
 
   withReporter(reporter: BenchmarkReporter): this {
     this.reporter = reporter;
+    return this;
+  }
+
+  withPerformanceObserver(options?: PerformanceObserverOptions): this {
+    this.watcher = new PerformanceWatcher(options);
     return this;
   }
 
@@ -206,22 +215,23 @@ export class Benchmark {
       }
       process.env = oldEnv;
 
+      // REPORT
       const result = calculateResultsFromDurations(variation.name, timings);
 
       // PerformanceObserver needs a chance to flush
-      await new Promise((resolve) => setImmediate(resolve));
-      const measures = getMeasures();
-      for (const key in measures) {
-        result.subresults ??= [];
-        result.subresults.push(
-          calculateResultsFromDurations(key, measures[key]),
-        );
+      if (this.watcher) {
+        const measures = await this.watcher.getMeasures();
+        for (const key in measures) {
+          result.subresults ??= [];
+          result.subresults.push(
+            calculateResultsFromDurations(key, measures[key]),
+          );
+        }
+        this.watcher.clearMeasures();
       }
-      clearMeasures();
-      // REPORT
       results.push(result);
     }
-
+    this.watcher?.disconnect();
     this.reporter.report(this, results);
     return results;
   }
