@@ -1,0 +1,4 @@
+{
+  // We use the builtin node runner, so we disable the code lens for the jest tests
+  "jestrunner.disableCodeLens": true
+}
