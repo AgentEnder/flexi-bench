@@ -4,18 +4,16 @@ import {
   EnvironmentVariableOptions,
   Action,
 } from './api-types';
+import { BenchmarkBase } from './shared-api';
 import { findCombinations } from './utils';
 
-export class Variation {
-  public setupMethods: SetupMethod[] = [];
-  public teardownMethods: TeardownMethod[] = [];
-
+export class Variation extends BenchmarkBase {
   public environment: Partial<NodeJS.ProcessEnv> = {};
   public cliArgs: string[] = [];
 
-  public action?: Action;
-
-  constructor(public name: string) {}
+  constructor(public name: string) {
+    super();
+  }
 
   public static FromEnvironmentVariables(
     variables: EnvironmentVariableOptions,
@@ -71,16 +69,6 @@ export class Variation {
     });
   }
 
-  withSetup(setup: SetupMethod): this {
-    this.setupMethods.push(setup);
-    return this;
-  }
-
-  withTeardown(teardown: TeardownMethod): this {
-    this.teardownMethods.push(teardown);
-    return this;
-  }
-
   withEnvironmentVariables(env: Partial<NodeJS.ProcessEnv>): this {
     this.environment = {
       ...this.environment,
@@ -91,11 +79,6 @@ export class Variation {
 
   withEnvironmentVariable(name: string, value: string): this {
     this.environment[name] = value;
-    return this;
-  }
-
-  withAction(action: Action): this {
-    this.action = action;
     return this;
   }
 

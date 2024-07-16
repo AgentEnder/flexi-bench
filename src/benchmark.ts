@@ -12,12 +12,9 @@ import {
   PerformanceObserverOptions,
   PerformanceWatcher,
 } from './performance-observer';
+import { BenchmarkBase } from './shared-api';
 
-export class Benchmark {
-  private setupMethods: SetupMethod[] = [];
-  private teardownMethods: TeardownMethod[] = [];
-  private action?: Action;
-
+export class Benchmark extends BenchmarkBase {
   public variations: Variation[] = [];
 
   private iterations?: number;
@@ -36,6 +33,7 @@ export class Benchmark {
       reporter?: BenchmarkReporter;
     },
   ) {
+    super();
     if (options?.action) {
       this.action = options.action;
     }
@@ -57,8 +55,22 @@ export class Benchmark {
   withVariation(
     name: string,
     builder: (variation: Variation) => Variation,
+  ): this;
+  withVariation(variation: Variation): this;
+  withVariation(
+    nameOrVariation: string | Variation,
+    builder?: (variation: Variation) => Variation,
   ): this {
-    this.variations.push(builder(new Variation(name)));
+    if (nameOrVariation instanceof Variation) {
+      this.variations.push(nameOrVariation);
+    } else if (builder) {
+      this.variations.push(builder(new Variation(nameOrVariation)));
+      return this;
+    } else {
+      throw new Error(
+        '`withVariation` must be called with either a Variation or a name and a builder function.',
+      );
+    }
     return this;
   }
 
@@ -67,17 +79,17 @@ export class Benchmark {
     return this;
   }
 
-  withSetup(setup: () => void): this {
+  withSetup(setup: SetupMethod): this {
     this.setupMethods.push(setup);
     return this;
   }
 
-  withTeardown(teardown: () => void): this {
+  withTeardown(teardown: TeardownMethod): this {
     this.teardownMethods.push(teardown);
     return this;
   }
 
-  withAction(action: () => void): this {
+  withAction(action: Action): this {
     this.action = action;
     return this;
   }
@@ -154,6 +166,11 @@ export class Benchmark {
           : null;
         let running = true;
         while (running) {
+          for (const setup of this.setupEachMethods.concat(
+            variation.setupEachMethods,
+          )) {
+            await setup(variation);
+          }
           const a = performance.now();
           if (variation.action) {
             await runAction(variation.action, variation);
@@ -161,6 +178,11 @@ export class Benchmark {
             await runAction(this.action, variation);
           }
           const b = performance.now();
+          for (const teardown of this.teardownEachMethods.concat(
+            variation.teardownEachMethods,
+          )) {
+            await teardown(variation);
+          }
           const duration = b - a;
           completedIterations++;
           totalCompletedIterations++;
@@ -237,6 +259,9 @@ export class Benchmark {
   }
 
   private validate() {
+    if (!this.timeout && !this.iterations) {
+      this.iterations = 5;
+    }
     const missingActions = [];
     for (const variation of this.variations) {
       let action = variation.action || this.action;

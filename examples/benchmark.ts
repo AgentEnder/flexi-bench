@@ -57,7 +57,7 @@ new Suite('Cache Benchmark Suite')
   .addBenchmark(warmCacheBenchmark)
   .addBenchmark(coldCacheBenchmark)
   .addBenchmark(noCacheBenchmark)
-  .addVariations(
+  .withVariations(
     Variation.FromEnvironmentVariables([
       ['NX_DAEMON', ['true', 'false']],
       ['NX_ISOLATE_PLUGINS', ['true', 'false']],

@@ -1,4 +1,4 @@
-import { SuiteReporter } from './api-types';
+import { BenchmarkReporter, SuiteReporter } from './api-types';
 import { Benchmark } from './benchmark';
 import { SuiteConsoleReporter } from './reporters/suite-console-reporter';
 import { Result } from './results';
@@ -13,6 +13,7 @@ export class Suite {
   private variations: Variation[] = [];
 
   private reporter: SuiteReporter;
+  private benchmarkReporter?: BenchmarkReporter;
 
   constructor(
     private name: string,
@@ -28,13 +29,23 @@ export class Suite {
     return this;
   }
 
-  addVariation(variation: Variation) {
+  withVariation(variation: Variation) {
     this.variations.push(variation);
     return this;
   }
 
-  addVariations(variations: Variation[]) {
+  withVariations(variations: Variation[]) {
     this.variations.push(...variations);
+    return this;
+  }
+
+  withReporter(reporter: SuiteReporter) {
+    this.reporter = reporter;
+    return this;
+  }
+
+  withBenchmarkReporter(reporter: BenchmarkReporter) {
+    this.benchmarkReporter = reporter;
     return this;
   }
 
@@ -42,8 +53,12 @@ export class Suite {
     const results: Record<string, Result[]> = {};
     for (const benchmark of this.benchmarks) {
       benchmark.withVariations(this.variations);
+      if (this.benchmarkReporter) {
+        benchmark.withReporter(this.benchmarkReporter);
+      }
       results[benchmark.name] = await benchmark.run();
     }
     this.reporter.report(results);
+    return results;
   }
 }
