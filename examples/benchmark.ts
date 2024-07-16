@@ -1,6 +1,12 @@
+// ---
+// id: 'full-example'
+// title: 'Full Example'
+// sidebar_label: 'Full Example'
+// description: 'This is a full example using flexi-bench to test some changes to Nx.'
+// ---
 import { ExecSyncOptions, execSync } from 'child_process';
 
-import { Benchmark, Suite, Variation } from '../src/index';
+import { benchmark, setup, setupEach, suite, Variation } from '../src/index';
 
 const ITERATIONS = 3;
 
@@ -9,58 +15,57 @@ const execSyncOptions: ExecSyncOptions = {
   shell: true as any,
 };
 
-/**
- * Benchmarks when the cache has already been warmed before any iterations.
- */
-const warmCacheBenchmark = new Benchmark('Warm Cache Benchmark', {
-  iterations: ITERATIONS,
-})
-  .withAction(() => {
-    execSync(`npx nx show projects`, execSyncOptions);
-  })
-  .withSetup(() => {
-    execSync(
-      `npx nx reset --only-daemon --only-workspace-data`,
-      execSyncOptions,
-    );
-    execSync(`npx nx show projects`, execSyncOptions);
-  });
-
-/**
- * Benchmarks when the cache has not been warmed before any iterations.
- * In this case, the first iteration will do the majority of the work
- * to warm the cache.
- */
-const coldCacheBenchmark = new Benchmark('Cold Cache Benchmark', {
-  iterations: ITERATIONS,
-  action: `npx nx show projects`,
-  setup: () => {
-    execSync(
-      `npx nx reset --only-daemon --only-workspace-data`,
-      execSyncOptions,
-    );
-  },
-});
-
-/**
- * Benchmarks with killing the cache and daemon before each iteration.
- * This represents a scenario where the cache is not used at all.
- */
-const noCacheBenchmark = new Benchmark('No Cache Benchmark', {
-  iterations: ITERATIONS,
-}).withAction(() => {
-  execSync(`npx nx reset --only-daemon --only-workspace-data`, execSyncOptions);
-  execSync(`npx nx show projects`, execSyncOptions);
-});
-
-new Suite('Cache Benchmark Suite')
-  .addBenchmark(warmCacheBenchmark)
-  .addBenchmark(coldCacheBenchmark)
-  .addBenchmark(noCacheBenchmark)
-  .withVariations(
+suite('Nx Daemon + Isolation Benchmark', (s) => {
+  s.withVariations(
     Variation.FromEnvironmentVariables([
       ['NX_DAEMON', ['true', 'false']],
       ['NX_ISOLATE_PLUGINS', ['true', 'false']],
     ]),
-  )
-  .run();
+  );
+
+  /**
+   * Benchmarks when the cache has already been warmed before any iterations.
+   */
+  benchmark('Warm Cache Benchmark', (b) => {
+    setup(() => {
+      execSync(
+        `npx nx reset --only-daemon --only-workspace-data`,
+        execSyncOptions,
+      );
+      execSync(`npx nx show projects`, execSyncOptions);
+    });
+
+    b.withIterations(ITERATIONS).withAction('npx nx show projects');
+  });
+
+  /**
+   * Benchmarks when the cache has not been warmed before any iterations.
+   * In this case, the first iteration will do the majority of the work
+   * to warm the cache.
+   */
+  benchmark('Cold Cache Benchmark', (b) => {
+    setup(() => {
+      execSync(
+        `npx nx reset --only-daemon --only-workspace-data`,
+        execSyncOptions,
+      );
+    });
+
+    b.withIterations(ITERATIONS).withAction('npx nx show projects');
+  });
+
+  /**
+   * Benchmarks with killing the cache and daemon before each iteration.
+   * This represents a scenario where the cache is not used at all.
+   */
+  benchmark('No Cache Benchmark', (b) => {
+    setupEach(() => {
+      execSync(
+        `npx nx reset --only-daemon --only-workspace-data`,
+        execSyncOptions,
+      );
+    });
+
+    b.withIterations(ITERATIONS).withAction('npx nx show projects');
+  });
+});

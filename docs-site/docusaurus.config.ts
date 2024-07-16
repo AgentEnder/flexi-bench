@@ -1,6 +1,7 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import { ExamplesDocsPlugin } from './src/plugins/examples-plugin';
 
 const config: Config = {
   title: 'FlexiBench',
@@ -36,8 +37,11 @@ const config: Config = {
         entryPoints: ['../src/index.ts'],
         tsconfig: '../tsconfig.json',
         out: './docs/api',
+        readme: 'none',
+        name: 'API Reference',
       },
     ],
+    ExamplesDocsPlugin,
   ],
 
   presets: [
@@ -46,9 +50,6 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl: 'https://github.com/agentender/flexi-bench',
           routeBasePath: '/',
         },
         blog: false,

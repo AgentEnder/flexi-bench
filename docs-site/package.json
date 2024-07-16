@@ -54,6 +54,11 @@
           "typecheck",
           "^build"
         ]
+      },
+      "deploy": {
+        "dependsOn": [
+          "build"
+        ]
       }
     }
   }

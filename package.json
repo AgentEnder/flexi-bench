@@ -16,17 +16,18 @@
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
     "@swc/helpers": "~0.5.11",
-    "nx": "19.4.2",
-    "ts-node": "^10.9.2"
-  },
-  "dependencies": {
     "@types/cli-progress": "^3.11.6",
     "@types/node": "^20.14.10",
-    "cli-progress": "^3.12.0",
-    "markdown-factory": "^0.0.6",
+    "nx": "19.4.2",
     "prettier": "^3.3.2",
+    "ts-node": "^10.9.2",
     "tsx": "^4.16.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "yaml": "^2.4.5"
+  },
+  "dependencies": {
+    "cli-progress": "^3.12.0",
+    "markdown-factory": "^0.0.6"
   },
   "nx": {},
   "files": [

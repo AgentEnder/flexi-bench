@@ -9,7 +9,7 @@ let activeSuite: Suite | null = null;
  * Registers a new suite to run.
  * @param name The name of the suite.
  * @param fn Callback to register benchmarks and update the suite.
- * @returns The results of the suite. Record<string, Result[]>
+ * @returns The results of the suite. `Record<string, Result[]>`
  */
 export function suite(name: string, fn: (suite: Suite) => Suite | void) {
   const suite = new Suite(name);
@@ -25,7 +25,7 @@ let activeBenchmark: Benchmark | null = null;
  * Registers a new benchmark to run. If inside a {@link suite} callback, it will be added to the suite. Otherwise, it will run immediately.
  * @param name The name of the benchmark.
  * @param fn Callback to register variations and update the benchmark.
- * @returns If not inside a suite, the results of the benchmark. Result[]. Else, void.
+ * @returns If not inside a suite, the results of the benchmark. `Result[]`. Else, `void`.
  */
 export function benchmark(
   name: string,
@@ -49,7 +49,7 @@ let activeVariation: Variation | null = null;
  * Registers a new variation to run. Must be inside a {@link benchmark} or {@link suite} callback.
  * @param name The name of the variation.
  * @param fn A callback to update the variation.
- * @returns void
+ * @returns `void`
  */
 export function variation(
   name: string,

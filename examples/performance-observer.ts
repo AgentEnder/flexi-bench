@@ -1,3 +1,14 @@
+// ---
+// id: performance-observer
+// title: Performance Observer
+// sidebar_label: Performance Observer
+// description: |
+//   FlexiBench provides a `.withPerformanceObserver()` method to easily capture performance of segments of the callback function.
+//   This example demonstrates how to use the Performance Observer to capture performance of the \`createProjectGraphAsync\` function.
+//   Because `nx` uses `performance.mark` and `performance.measure` within its codebase, we can easily debug which portion has slowed down.
+//
+//   Note: A performance observer can not capture performance of code running via child processes, so it only works for callback functions.
+// ---
 import { createProjectGraphAsync } from '@nx/devkit';
 import { daemonClient } from 'nx/src/daemon/client/client';
 
