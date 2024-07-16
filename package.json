@@ -35,5 +35,10 @@
     "LICENSE",
     "CHANGELOG.md",
     "package.json"
+  ],
+  "workspaces": [
+    ".",
+    "docs-site",
+    "packages/*"
   ]
 }
