@@ -3,6 +3,10 @@
   "version": "0.0.0-alpha.3",
   "description": "",
   "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AgentEnder/flexi-bench"
+  },
   "scripts": {
     "test": "node --import tsx --test './src/**/*.spec.ts'",
     "test:watch": "node --import tsx --test --watch './src/**/*.spec.ts'",
@@ -10,7 +14,7 @@
     "format": "prettier --write src"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@nx/js": "^19.4.2",
     "@swc-node/register": "~1.9.1",
