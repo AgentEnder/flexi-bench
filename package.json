@@ -10,7 +10,7 @@
     "format": "prettier --write src"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@nx/js": "^19.4.2",
     "@swc-node/register": "~1.9.1",

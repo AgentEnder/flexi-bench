@@ -1,0 +1,53 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      specifier:
+        description: 'Version to release'
+        required: true
+        default: 'prerelease'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # needed to push changelog and tag
+      id-token: write # needed for provenance data generation
+      pages: write # needed to deploy docs site
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and release
+        run: nx release
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+          NPM_CONFIG_PROVENANCE: true
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push changelog + tag
+        run: git push && git push --tags
+
+      - name: Deploy
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          GIT_USER='github-actions[bot]' nx deploy docs-site
+        env:
+          GIT_USER: github-actions[bot]
+          GIT_EMAIL: github-actions[bot]@users.noreply.github.com
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: github.ref == 'refs/heads/main'

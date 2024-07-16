@@ -23,6 +23,3 @@ jobs:
 
       - name: Run tests
         run: npx nx run-many -t build,test,e2e
-
-      - name: Deploy Docs Site
-        run: npx nx deploy docs-site

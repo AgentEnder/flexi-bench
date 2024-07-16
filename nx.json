@@ -34,7 +34,8 @@
   },
   "release": {
     "version": {
-      "preVersionCommand": "nx run-many -t build"
+      "preVersionCommand": "nx run-many -t build",
+      "conventionalCommits": true
     },
     "changelog": {
       "workspaceChangelog": {
