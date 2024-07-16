@@ -1,3 +1,12 @@
+// ---
+// id: runner-api
+// title: Runner API
+// sidebar_label: Runner API
+// description: |
+//   FlexiBench provides a simple API to define benchmarks and suites based on some common testing tools.
+//   This example demonstrates how to use the Runner API to define a suite with a benchmark and some setup and teardown functions.
+// ---
+
 import {
   beforeAll,
   beforeEach,

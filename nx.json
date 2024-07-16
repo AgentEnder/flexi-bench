@@ -27,11 +27,19 @@
     },
     "format:check": {
       "cache": true
+    },
+    "typecheck": {
+      "cache": true
     }
   },
   "release": {
     "version": {
       "preVersionCommand": "nx run-many -t build"
+    },
+    "changelog": {
+      "workspaceChangelog": {
+        "createRelease": "github"
+      }
     }
   }
 }
