@@ -2,6 +2,8 @@ import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 import { ExamplesDocsPlugin } from './src/plugins/examples-plugin';
+import RemarkGithubPlugin from 'remark-github';
+import { CopyReadmeAndChangelogPlugin } from './src/plugins/copy-readme-changelog';
 
 const config: Config = {
   title: 'FlexiBench',
@@ -41,6 +43,7 @@ const config: Config = {
         name: 'API Reference',
       },
     ],
+    CopyReadmeAndChangelogPlugin,
     ExamplesDocsPlugin,
   ],
 
@@ -51,6 +54,9 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           routeBasePath: '/',
+          remarkPlugins: [
+            [RemarkGithubPlugin, { repository: 'agentender/flexi-bench' }],
+          ],
         },
         blog: false,
         theme: {

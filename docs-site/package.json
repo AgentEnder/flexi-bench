@@ -24,6 +24,7 @@
     "@docusaurus/tsconfig": "3.4.0",
     "@docusaurus/types": "3.4.0",
     "docusaurus-plugin-typedoc": "^1.0.3",
+    "remark-github": "^12.0.0",
     "typedoc": "^0.26.4",
     "typedoc-plugin-markdown": "^4.2.1",
     "typescript": "~5.2.2"
@@ -53,6 +54,19 @@
         "dependsOn": [
           "typecheck",
           "^build"
+        ],
+        "outputs": [
+          "{projectRoot}/.docusaurus",
+          "{projectRoot}/build",
+          "{projectRoot}/docs/examples",
+          "{projectRoot}/docs/api"
+        ],
+        "inputs": [
+          "{projectRoot}/**/*",
+          "{projectRoot}/docusaurus.config.js",
+          "!{projectRoot}/src/**/*.d.ts",
+          "!{projectRoot}/docs/examples",
+          "!{projectRoot}/docs/api"
         ]
       },
       "deploy": {

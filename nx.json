@@ -35,6 +35,11 @@
   "release": {
     "version": {
       "preVersionCommand": "nx run-many -t build"
+    },
+    "changelog": {
+      "workspaceChangelog": {
+        "createRelease": "github"
+      }
     }
   }
 }

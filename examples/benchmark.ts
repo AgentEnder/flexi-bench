@@ -6,7 +6,7 @@
 // ---
 import { ExecSyncOptions, execSync } from 'child_process';
 
-import { benchmark, setup, setupEach, suite, Variation } from '../src/index';
+import { benchmark, setup, setupEach, xsuite, Variation } from '../src/index';
 
 const ITERATIONS = 3;
 
@@ -15,7 +15,7 @@ const execSyncOptions: ExecSyncOptions = {
   shell: true as any,
 };
 
-suite('Nx Daemon + Isolation Benchmark', (s) => {
+xsuite('Nx Daemon + Isolation Benchmark', (s) => {
   s.withVariations(
     Variation.FromEnvironmentVariables([
       ['NX_DAEMON', ['true', 'false']],

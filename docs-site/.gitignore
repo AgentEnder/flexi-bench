@@ -9,6 +9,8 @@
 .cache-loader
 /docs/api
 /docs/examples
+/docs/changelog.md
+/docs/index.md
 
 # Misc
 .DS_Store
