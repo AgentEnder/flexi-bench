@@ -1,15 +1,23 @@
 name: Deploy
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
-      specifier:
-        description: 'Version to release'
+      docs_only:
+        description: 'If true, only deploy the docs site'
+        type: choice
         required: true
-        default: 'prerelease'
+        default: 'false'
+        options:
+          - true
+          - false
+  workflow_call:
+    inputs:
+      docs_only:
+        description: 'If true, only deploy the docs site'
+        type: string
+        required: true
+        default: 'false'
 
 jobs:
   deploy:
@@ -49,17 +57,20 @@ jobs:
         run: npm ci
 
       - name: Build and release
-        run: node ./node_modules/.bin/nx release --yes
+        run: |
+          node ./node_modules/.bin/nx release --yes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: github.ref == 'refs/heads/main' && github.event.inputs.docs_only == 'false'
 
       - name: Deploy
         run: |
-          GIT_USER='github-actions[bot]' npx nx deploy docs-site
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          npx nx deploy docs-site
         env:
-          GIT_USER: github-actions[bot]
-          GIT_EMAIL: github-actions[bot]@users.noreply.github.com
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.ref == 'refs/heads/main'
