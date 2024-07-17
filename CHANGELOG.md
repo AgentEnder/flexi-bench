@@ -1,3 +1,18 @@
+## 0.0.0-alpha.4 (2024-07-17)
+
+
+### 🚀 Features
+
+- add suites ([caaa5ed](https://github.com/AgentEnder/flexi-bench/commit/caaa5ed))
+- add syntax to run commands ([#6](https://github.com/AgentEnder/flexi-bench/pull/6))
+- add performance-observer API draft ([#7](https://github.com/AgentEnder/flexi-bench/pull/7))
+- initial draft of runner API ([#8](https://github.com/AgentEnder/flexi-bench/pull/8))
+- docs-site ([#9](https://github.com/AgentEnder/flexi-bench/pull/9))
+
+### ❤️  Thank You
+
+- Craigory Coppola @AgentEnder
+
 ## 0.0.0-alpha.3 (2024-07-11)
 
 This was a version bump only, there were no code changes.
