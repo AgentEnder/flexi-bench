@@ -6,7 +6,6 @@
     "serve": "docusaurus start",
     "build": "docusaurus build",
     "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc"
   },
@@ -72,7 +71,13 @@
       "deploy": {
         "dependsOn": [
           "build"
-        ]
+        ],
+        "executor": "@nx-dotnet/nx-ghpages:deploy",
+        "options": {
+          "remote": "https://github.com/agentender/flexi-bench.git",
+          "directory": "{projectRoot}/build",
+          "baseBranch": "main"
+        }
       }
     }
   }

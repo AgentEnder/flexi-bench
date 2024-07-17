@@ -110,7 +110,7 @@ function formatIndexMd(examples: ReturnType<typeof collectExamples>): string {
 id: examples
 title: Examples
 ---
-${h1('Examples', ul(examples.map((example) => link(example.data.id, example.data?.title))))}
+${h1('Examples', ul(examples.map((example) => link(`examples/${example.data.id}`, example.data?.title))))}
 `;
 }
 

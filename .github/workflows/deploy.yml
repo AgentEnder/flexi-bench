@@ -1,41 +1,44 @@
 name: Deploy
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
-      specifier:
-        description: 'Version to release'
+      docs_only:
+        description: 'If true, only deploy the docs site'
+        type: choice
         required: true
-        default: 'prerelease'
+        default: 'false'
+        options:
+          - true
+          - false
+  workflow_call:
+    inputs:
+      docs_only:
+        description: 'If true, only deploy the docs site'
+        type: string
+        required: true
+        default: 'false'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # needed to push changelog and tag
-      id-token: write # needed for provenance data generation
-      pages: write # needed to deploy docs site
+      contents: write
+      id-token: write
+      pages: write
 
     steps:
-      - uses: actions/create-github-app-token@v1
-        id: app-token
-        with:
-          app-id: ${{ secrets.DEPLOY_APP_ID }}
-          private-key: ${{ secrets.DEPLOY_PRIVATE_KEY }}
-
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          repository: agentender/flexi-bench
           fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
+          # token: ${{ steps.app-token.outputs.token }}
 
       - name: Setup Git User
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -49,17 +52,18 @@ jobs:
         run: npm ci
 
       - name: Build and release
-        run: node ./node_modules/.bin/nx release --yes
+        run: |
+          node ./node_modules/.bin/nx release --yes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: github.ref == 'refs/heads/main' && github.event.inputs.docs_only == 'false'
 
       - name: Deploy
         run: |
-          GIT_USER='github-actions[bot]' npx nx deploy docs-site
+          npx nx deploy docs-site
         env:
-          GIT_USER: github-actions[bot]
-          GIT_EMAIL: github-actions[bot]@users.noreply.github.com
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.ref == 'refs/heads/main'

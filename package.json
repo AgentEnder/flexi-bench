@@ -11,11 +11,13 @@
     "test": "node --import tsx --test './src/**/*.spec.ts'",
     "test:watch": "node --import tsx --test --watch './src/**/*.spec.ts'",
     "build": "tsc -p tsconfig.json",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "prepare": "patch-package"
   },
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@nx-dotnet/nx-ghpages": "^2.2.0",
     "@nx/js": "^19.4.2",
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",
@@ -23,6 +25,7 @@
     "@types/cli-progress": "^3.11.6",
     "@types/node": "^20.14.10",
     "nx": "19.4.2",
+    "patch-package": "^8.0.0",
     "prettier": "^3.3.2",
     "ts-node": "^10.9.2",
     "tsx": "^4.16.2",
