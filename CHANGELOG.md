@@ -1,3 +1,14 @@
+## 0.0.0-alpha.5 (2024-07-17)
+
+
+### 🚀 Features
+
+- **repo:** add ability to publish only docs ([c074142](https://github.com/AgentEnder/flexi-bench/commit/c074142))
+
+### ❤️  Thank You
+
+- Craigory Coppola @AgentEnder
+
 ## 0.0.0-alpha.4 (2024-07-17)
 
 
