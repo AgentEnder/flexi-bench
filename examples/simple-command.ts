@@ -1,4 +1,4 @@
-import { Benchmark, Suite, Variation } from '../src';
+import { Benchmark, Suite, Variation } from 'flexi-bench';
 
 (async () => {
   const results = await new Suite('Simple Command Example')

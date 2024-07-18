@@ -12,12 +12,12 @@
     "test:watch": "node --import tsx --test --watch './src/**/*.spec.ts'",
     "build": "tsc -p tsconfig.json",
     "format": "prettier --write src",
-    "prepare": "patch-package"
+    "prepare": "patch-package && nx build flexi-bench"
   },
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@nx-dotnet/nx-ghpages": "^2.2.0",
+    "@nx-dotnet/nx-ghpages": "^2.3.0",
     "@nx/js": "^19.4.2",
     "@swc-node/register": "~1.9.1",
     "@swc/core": "~1.5.7",

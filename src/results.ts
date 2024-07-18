@@ -30,7 +30,17 @@ export type Result = {
   /**
    * The raw durations, in order. Used for custom reporters.
    */
-  raw: number[];
+  raw: (number | Error)[];
+
+  /**
+   * Whether any run of the benchmark failed.
+   */
+  failed?: boolean;
+
+  /**
+   * The rate of failure, if any.
+   */
+  failureRate?: number;
 
   /**
    * Subresults, if any. Typically sourced from performance observer.
@@ -40,16 +50,29 @@ export type Result = {
 
 export function calculateResultsFromDurations(
   label: string,
-  durations: number[],
+  durations: (number | Error)[],
 ): Result {
-  durations.sort((a, b) => a - b);
+  const errors: Error[] = [];
+  const results: number[] = [];
+
+  for (const duration of durations) {
+    if (duration instanceof Error) {
+      errors.push(duration);
+    } else {
+      results.push(duration);
+    }
+  }
+
+  results.sort((a, b) => a - b);
   return {
     label,
-    min: Math.min(...durations),
-    max: Math.max(...durations),
+    min: Math.min(...results),
+    max: Math.max(...results),
     average:
-      durations.reduce((acc, duration) => acc + duration, 0) / durations.length,
-    p95: durations[Math.floor(durations.length * 0.95)],
+      results.reduce((acc, duration) => acc + duration, 0) / results.length,
+    p95: results[Math.floor(results.length * 0.95)],
     raw: durations,
+    failed: errors.length > 0,
+    failureRate: errors.length / durations.length,
   };
 }

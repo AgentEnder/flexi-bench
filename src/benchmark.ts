@@ -5,6 +5,8 @@ import {
   SetupMethod,
   Action,
   BenchmarkReporter,
+  ErrorStrategy,
+  AggregateBenchmarkError,
 } from './api-types';
 import { spawn } from 'child_process';
 import { calculateResultsFromDurations, Result } from './results';
@@ -21,6 +23,8 @@ export class Benchmark extends BenchmarkBase {
   private timeout?: number;
   private reporter: BenchmarkReporter;
   private watcher?: PerformanceWatcher;
+
+  public errorStrategy: ErrorStrategy = ErrorStrategy.Continue;
 
   constructor(
     public name: string,
@@ -135,7 +139,7 @@ export class Benchmark extends BenchmarkBase {
       variationIndex++
     ) {
       const variation = this.variations[variationIndex];
-      const timings: number[] = [];
+      const iterationResults: (number | Error)[] = [];
       // SETUP
       const oldEnv = { ...process.env };
       process.env = {
@@ -171,22 +175,24 @@ export class Benchmark extends BenchmarkBase {
           )) {
             await setup(variation);
           }
-          const a = performance.now();
-          if (variation.action) {
-            await runAction(variation.action, variation);
-          } else if (this.action) {
-            await runAction(this.action, variation);
+          const result = await runAndMeasureAction(benchmarkThis, variation);
+          const errorStrategy =
+            variation.errorStrategy ?? benchmarkThis.errorStrategy;
+          if (
+            errorStrategy === ErrorStrategy.Abort &&
+            result instanceof Error
+          ) {
+            reject(result);
+            return;
           }
-          const b = performance.now();
           for (const teardown of this.teardownEachMethods.concat(
             variation.teardownEachMethods,
           )) {
             await teardown(variation);
           }
-          const duration = b - a;
           completedIterations++;
           totalCompletedIterations++;
-          timings.push(duration);
+          iterationResults.push(result);
           if (
             this.reporter.progress &&
             totalIterations &&
@@ -238,7 +244,10 @@ export class Benchmark extends BenchmarkBase {
       process.env = oldEnv;
 
       // REPORT
-      const result = calculateResultsFromDurations(variation.name, timings);
+      const result = calculateResultsFromDurations(
+        variation.name,
+        iterationResults,
+      );
 
       // PerformanceObserver needs a chance to flush
       if (this.watcher) {
@@ -255,6 +264,12 @@ export class Benchmark extends BenchmarkBase {
     }
     this.watcher?.disconnect();
     this.reporter.report(this, results);
+    if (
+      this.errorStrategy === ErrorStrategy.DelayedThrow &&
+      results.some((r) => r.failed)
+    ) {
+      throw new AggregateBenchmarkError(results);
+    }
     return results;
   }
 
@@ -287,6 +302,20 @@ export class Benchmark extends BenchmarkBase {
         throw new Error(`Benchmark ${this.name} is missing an action`);
       }
     }
+  }
+}
+
+async function runAndMeasureAction(
+  benchmark: Benchmark,
+  variation: Variation,
+): Promise<number | Error> {
+  try {
+    const a = performance.now();
+    await runAction((variation.action ?? benchmark.action)!, variation);
+    const b = performance.now();
+    return b - a;
+  } catch (e) {
+    return e instanceof Error ? e : new Error('Unknown error during action.');
   }
 }
 

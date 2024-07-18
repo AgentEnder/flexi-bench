@@ -1,4 +1,9 @@
-import { Action, SetupMethod, TeardownMethod } from './api-types';
+import {
+  Action,
+  ErrorStrategy,
+  SetupMethod,
+  TeardownMethod,
+} from './api-types';
 
 export class BenchmarkBase {
   public setupEachMethods: SetupMethod[] = [];
@@ -6,6 +11,7 @@ export class BenchmarkBase {
   public teardownMethods: TeardownMethod[] = [];
   public teardownEachMethods: TeardownMethod[] = [];
   public action?: Action;
+  public errorStrategy?: ErrorStrategy;
 
   withSetup(setup: SetupMethod): this {
     this.setupMethods.push(setup);
@@ -29,6 +35,11 @@ export class BenchmarkBase {
 
   withAction(action: Action): this {
     this.action = action;
+    return this;
+  }
+
+  withErrorStrategy(errorStrategy: ErrorStrategy): this {
+    this.errorStrategy = errorStrategy;
     return this;
   }
 }

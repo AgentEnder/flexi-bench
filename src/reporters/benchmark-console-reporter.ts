@@ -25,7 +25,10 @@ export class BenchmarkConsoleReporter implements BenchmarkReporter {
   }
 
   report(benchmark: Benchmark, results: Result[]) {
+    const tableEntries = results.map(({ raw, ...rest }) => ({
+      ...rest,
+    }));
     console.log(`Benchmark: ${benchmark.name}`);
-    console.table(results);
+    console.table(tableEntries);
   }
 }
