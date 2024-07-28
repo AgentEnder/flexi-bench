@@ -14,7 +14,7 @@ import {
   afterEach,
   benchmark,
   suite,
-} from '../src/benchmark-runner';
+} from 'flexi-bench';
 
 suite('My Suite', () => {
   benchmark('My Benchmark', (benchmark) => {

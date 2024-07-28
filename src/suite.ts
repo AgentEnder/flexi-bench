@@ -1,4 +1,9 @@
-import { BenchmarkReporter, SuiteReporter } from './api-types';
+import {
+  AggregateSuiteError,
+  BenchmarkReporter,
+  ErrorStrategy,
+  SuiteReporter,
+} from './api-types';
 import { Benchmark } from './benchmark';
 import { SuiteConsoleReporter } from './reporters/suite-console-reporter';
 import { Result } from './results';
@@ -14,6 +19,8 @@ export class Suite {
 
   private reporter: SuiteReporter;
   private benchmarkReporter?: BenchmarkReporter;
+  private errorStrategy: ErrorStrategy = ErrorStrategy.Continue;
+  private shouldSetErrorStrategyOnBenchmarks = false;
 
   constructor(
     private name: string,
@@ -49,6 +56,24 @@ export class Suite {
     return this;
   }
 
+  /**
+   * Sets the error strategy for the suite and optionally for the benchmarks.
+   * @param errorStrategy Determines what to do when an error occurs during a benchmark run. See {@link ErrorStrategy}
+   * @param opts Options for the error strategy. If `shouldSetOnBenchmarks` is true, the error strategy will be set on all benchmarks in the suite.
+   */
+  withErrorStrategy(
+    errorStrategy: ErrorStrategy,
+    opts?: {
+      shouldSetOnBenchmarks?: boolean;
+    },
+  ) {
+    this.errorStrategy = errorStrategy;
+    if (opts?.shouldSetOnBenchmarks) {
+      this.shouldSetErrorStrategyOnBenchmarks = opts?.shouldSetOnBenchmarks;
+    }
+    return this;
+  }
+
   async run() {
     const results: Record<string, Result[]> = {};
     for (const benchmark of this.benchmarks) {
@@ -56,9 +81,20 @@ export class Suite {
       if (this.benchmarkReporter) {
         benchmark.withReporter(this.benchmarkReporter);
       }
+      if (this.shouldSetErrorStrategyOnBenchmarks) {
+        benchmark.withErrorStrategy(this.errorStrategy);
+      }
       results[benchmark.name] = await benchmark.run();
     }
     this.reporter.report(results);
+    if (this.errorStrategy === ErrorStrategy.DelayedThrow) {
+      const failedResults = Object.values(results).flatMap((r) =>
+        r.filter((r) => r.failed),
+      );
+      if (failedResults.length > 0) {
+        throw new AggregateSuiteError(results);
+      }
+    }
     return results;
   }
 }

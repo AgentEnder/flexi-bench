@@ -16,7 +16,7 @@ import {
   Benchmark,
   BenchmarkConsoleReporter,
   MarkdownBenchmarkReporter,
-} from '../src';
+} from 'flexi-bench';
 import { join } from 'path';
 
 const defaultReporter = new BenchmarkConsoleReporter();

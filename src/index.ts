@@ -1,6 +1,7 @@
 export * from './reporters/benchmark-console-reporter';
 export * from './reporters/markdown-benchmark-reporter';
 export * from './reporters/suite-console-reporter';
+export * from './reporters/noop-reporter';
 
 export * from './api-types';
 export * from './benchmark';
