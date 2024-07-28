@@ -1,3 +1,15 @@
+## 0.1.0 (2024-07-28)
+
+
+### 🚀 Features
+
+- add different error strategies for handling failing actions ([#11](https://github.com/AgentEnder/flexi-bench/pull/11))
+- **repo:** add ability to publish only docs ([4cde432](https://github.com/AgentEnder/flexi-bench/commit/4cde432))
+
+### ❤️  Thank You
+
+- Craigory Coppola @AgentEnder
+
 # 0.0.0 (2024-07-28)
 
 
