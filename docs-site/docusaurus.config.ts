@@ -123,6 +123,12 @@ const config: Config = {
       ],
       copyright: `Copyright © ${new Date().getFullYear()} My Project, Inc. Built with Docusaurus.`,
     },
+    algolia: {
+      apiKey: 'a2ae217e34bdc5b2508887af62cf5089',
+      indexName: 'craigory',
+      contextualSearch: false,
+      appId: 'UR64FUYZDB',
+    },
     prism: {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
