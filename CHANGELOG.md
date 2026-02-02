@@ -1,3 +1,22 @@
+## 0.2.0 (2026-02-02)
+
+
+### 🚀 Features
+
+- add result metadata support (iterations, totalDuration, benchmarkName, variationName) ([22dfc33](https://github.com/agentender/flexi-bench/commit/22dfc33))
+- improve console reporters with metadata display ([bfb4482](https://github.com/agentender/flexi-bench/commit/bfb4482))
+- add composite and JSON suite reporters with examples ([c29f381](https://github.com/agentender/flexi-bench/commit/c29f381))
+- include git info on results when in CI ([3b2a63d](https://github.com/agentender/flexi-bench/commit/3b2a63d))
+- **docs-site:** upload algolia settings ([aea3eff](https://github.com/agentender/flexi-bench/commit/aea3eff))
+
+### 🩹 Fixes
+
+- **e2e:** ensure output directory exists and improve error handling ([c0e79ea](https://github.com/agentender/flexi-bench/commit/c0e79ea))
+
+### ❤️  Thank You
+
+- Craigory Coppola @AgentEnder
+
 ## 0.1.0 (2024-07-28)
 
 
