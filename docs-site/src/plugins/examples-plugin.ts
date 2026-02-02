@@ -2,10 +2,12 @@ import { LoadContext } from '@docusaurus/types';
 import { workspaceRoot } from '@nx/devkit';
 import { h1, lines, link, ul } from 'markdown-factory';
 
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { basename, dirname, join, sep } from 'node:path';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join, sep } from 'node:path';
 
-import { parse as loadYaml, stringify } from 'yaml';
+import { stringify } from 'yaml';
+
+import { CollectedExample, collectExamples } from '../../../scripts/examples';
 
 export async function ExamplesDocsPlugin(context: LoadContext) {
   const examplesRoot = join(workspaceRoot, 'examples') + sep;
@@ -30,49 +32,7 @@ export async function ExamplesDocsPlugin(context: LoadContext) {
   };
 }
 
-type FrontMatter = {
-  id: string;
-  title: string;
-  description?: string;
-};
-
-function loadExampleFile(path: string): {
-  contents: string;
-  data: FrontMatter;
-} {
-  const contents = readFileSync(path, 'utf-8');
-  const lines = contents.split('\n');
-  const frontMatterLines = [];
-
-  let line = lines.shift();
-  if (line && line.startsWith('// ---')) {
-    while (true) {
-      line = lines.shift();
-      if (!line) {
-        throw new Error('Unexpected end of file');
-      }
-      if (line.startsWith('// ---')) {
-        break;
-      } else {
-        frontMatterLines.push(line.replace(/^\/\/\s?/, ''));
-      }
-    }
-  } else if (line) {
-    lines.unshift(line);
-  }
-
-  const yaml = frontMatterLines.join('\n');
-
-  return {
-    contents: lines.join('\n'),
-    data: yaml ? loadYaml(yaml) : {},
-  };
-}
-
-function formatExampleMd({
-  contents,
-  data,
-}: ReturnType<typeof collectExamples>[number]): string {
+function formatExampleMd({ contents, data }: CollectedExample): string {
   const bodyLines = [h1(data.title)];
   if (data.description) {
     bodyLines.push(data.description);
@@ -87,25 +47,7 @@ ${contents}
   `;
 }
 
-function normalizeFrontMatter(
-  example: Omit<ReturnType<typeof collectExamples>[number], 'data'> & {
-    data: Partial<FrontMatter>;
-  },
-): ReturnType<typeof collectExamples>[number] {
-  const { data, path } = example;
-  const defaultName = basename(path).replace('.ts', '');
-
-  return {
-    ...example,
-    data: {
-      id: data?.id ?? defaultName.replace(/\//g, '-'),
-      title: data?.title ?? defaultName,
-      ...data,
-    },
-  };
-}
-
-function formatIndexMd(examples: ReturnType<typeof collectExamples>): string {
+function formatIndexMd(examples: CollectedExample[]): string {
   return `---
 id: examples
 title: Examples
@@ -114,37 +56,6 @@ ${h1('Examples', ul(examples.map((example) => link(`examples/${example.data.id}`
 `;
 }
 
-// returns all .ts files from given path
-function collectExamples(root: string): {
-  path: string;
-  contents: string;
-  data: FrontMatter;
-}[] {
-  const files = readdirSync(root, { withFileTypes: true });
-  const collected: {
-    path: string;
-    contents: string;
-    data: FrontMatter;
-  }[] = [];
-  for (const file of files) {
-    if (file.isDirectory()) {
-      collected.push(...collectExamples(join(root, file.name)));
-    } else {
-      if (file.name.endsWith('.ts')) {
-        const path = join(root, file.name);
-        const loaded = loadExampleFile(path);
-        collected.push(
-          normalizeFrontMatter({
-            path,
-            data: loaded.data,
-            contents: loaded.contents,
-          }),
-        );
-      }
-    }
-  }
-  return collected;
-}
 function ensureDirSync(path: string): void {
   try {
     mkdirSync(path, { recursive: true });

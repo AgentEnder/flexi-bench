@@ -3,13 +3,14 @@
 // title: Failing Actions
 // description: |
 //   This example showcases how flexi-bench handles an action which fails, and can help debug the issue.
+// expect_failure: true
 // ---
 import {
-  suite,
+  AggregateBenchmarkError,
   benchmark,
   ErrorStrategy,
   NoopReporter,
-  AggregateBenchmarkError,
+  suite,
 } from 'flexi-bench';
 
 const reporter = new NoopReporter();

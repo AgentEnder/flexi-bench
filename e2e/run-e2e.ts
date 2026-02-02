@@ -1,23 +1,9 @@
 import { spawnSync } from 'child_process';
-import { existsSync, mkdirSync, readdirSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { workspaceRoot } from 'nx/src/devkit-exports';
 import { join, sep } from 'path';
 
-// returns all .ts files from given path
-function collectExamples(path: string): string[] {
-  const files = readdirSync(path, { withFileTypes: true });
-  const collected: string[] = [];
-  for (const file of files) {
-    if (file.isDirectory()) {
-      collected.push(...collectExamples(join(path, file.name)));
-    } else {
-      if (file.name.endsWith('.ts')) {
-        collected.push(join(path, file.name));
-      }
-    }
-  }
-  return collected;
-}
+import { collectExamples } from '../scripts/examples';
 
 // Ensure output directory exists before running examples
 const outputDir = join(workspaceRoot, 'examples', 'output');
@@ -30,19 +16,24 @@ const examples = collectExamples(join(__dirname, '../examples'));
 let error = false;
 
 for (const example of examples) {
-  const label = example.replace(`${workspaceRoot}${sep}`, '');
-  process.stdout.write('▶️ ' + label);
+  if (example.data.e2e_skip) {
+    continue;
+  }
+  const path = example.path;
+  const label =
+    example.data.title ?? example.path.replace(`${workspaceRoot}${sep}`, '');
+  process.stdout.write('▶️  ' + label);
   const a = performance.now();
-  const result = spawnSync(process.execPath, ['--import=tsx', example], {
+  const result = spawnSync(process.execPath, ['--import=tsx', example.path], {
     cwd: workspaceRoot,
   });
   const b = performance.now();
 
   // Check if the process exited successfully (status 0)
-  if (result.status !== 0) {
+  if (result.status !== 0 && !example.data.expect_failure) {
     // move cursor to the beginning of the line
     process.stdout.write('\r');
-    console.log(`❌ ${label}`.padEnd(process.stdout.columns, ' '));
+    console.log(`❌  ${label}`.padEnd(process.stdout.columns, ' '));
     if (result.stderr) {
       console.error(result.stderr.toString());
     }
