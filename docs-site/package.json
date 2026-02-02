@@ -63,6 +63,8 @@
         "inputs": [
           "{projectRoot}/**/*",
           "{projectRoot}/docusaurus.config.js",
+          "{workspaceRoot}/README.md",
+          "{workspaceRoot}/CHANGELOG.md",
           "!{projectRoot}/src/**/*.d.ts",
           "!{projectRoot}/docs/examples",
           "!{projectRoot}/docs/api"
