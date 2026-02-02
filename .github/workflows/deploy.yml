@@ -71,5 +71,5 @@ jobs:
         run: |
           npx nx deploy docs-site
         env:
-          GH_TOKEN: steps.app-token.outputs.token
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: github.ref == 'refs/heads/main'
