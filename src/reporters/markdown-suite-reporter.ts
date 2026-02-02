@@ -1,6 +1,5 @@
-import { appendFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
-import { BenchmarkReporter } from '../api-types';
-import { Benchmark } from '../benchmark';
+import { writeFileSync } from 'fs';
+import { SuiteReporter } from '../api-types';
 import { h1, h2, h3, lines, table } from 'markdown-factory';
 import { Result } from '../results';
 
@@ -10,21 +9,19 @@ interface ComparisonEntry {
   [key: string]: string;
 }
 
-export class MarkdownBenchmarkReporter implements BenchmarkReporter {
+export class MarkdownSuiteReporter implements SuiteReporter {
   outputFile: string;
+  title: string;
   fields: Array<keyof Omit<Result, 'subresults' | 'label' | 'raw'>>;
-  append: boolean;
-  private isFirstReport: boolean = true;
-  private accumulatedResults: Map<string, Result[]> = new Map();
 
   constructor(opts: {
     outputFile: string;
-    fields?: MarkdownBenchmarkReporter['fields'];
-    append?: boolean;
+    title?: string;
+    fields?: MarkdownSuiteReporter['fields'];
   }) {
     this.outputFile = opts.outputFile;
+    this.title = opts.title ?? 'Benchmark Results';
     this.fields = opts.fields ?? ['min', 'average', 'p95', 'max'];
-    this.append = opts.append ?? false;
   }
 
   private formatDuration(value: number | undefined): string {
@@ -66,50 +63,25 @@ export class MarkdownBenchmarkReporter implements BenchmarkReporter {
     return parts.join(' ');
   }
 
-  report: (benchmark: Benchmark, results: Result[]) => void = (
-    benchmark,
-    results,
-  ) => {
-    if (this.append) {
-      // In append mode, accumulate results and write incrementally
-      this.accumulatedResults.set(benchmark.name, results);
-      const content = this.generateBenchmarkContent(benchmark, results);
+  report: (results: Record<string, Result[]>) => void = (results) => {
+    const benchmarkSections = Object.entries(results).map(
+      ([benchmarkName, benchmarkResults]) => {
+        return this.renderBenchmarkSection(benchmarkName, benchmarkResults);
+      },
+    );
 
-      if (this.isFirstReport) {
-        // First report: clear the file and write header
-        writeFileSync(this.outputFile, content);
-        this.isFirstReport = false;
-      } else {
-        // Subsequent reports: append with a separator
-        appendFileSync(this.outputFile, '\n\n---\n\n' + content);
-      }
-    } else {
-      // Legacy mode: overwrite file (useful for single benchmark reporting)
-      writeFileSync(
-        this.outputFile,
-        this.generateBenchmarkContent(benchmark, results),
-      );
-    }
+    writeFileSync(this.outputFile, h1(this.title, lines(benchmarkSections)));
   };
 
-  private generateBenchmarkContent(
-    benchmark: Benchmark,
+  private renderBenchmarkSection(
+    benchmarkName: string,
     results: Result[],
   ): string {
+    const hasSubresults = results.some((r) => !!r.subresults);
+    const hasMultipleVariations = results.length > 1;
+
     const sections: string[] = [];
 
-    // Main results section
-    sections.push(this.generateResultsTable(results));
-
-    // Comparison section (if multiple variations)
-    if (results.length > 1) {
-      sections.push(this.generateComparison(results));
-    }
-
-    return h1(benchmark.name, lines(sections));
-  }
-
-  private generateResultsTable(results: Result[]): string {
     const fieldConfigs: Array<{
       field: keyof Result;
       label: string;
@@ -132,20 +104,30 @@ export class MarkdownBenchmarkReporter implements BenchmarkReporter {
       })),
     ];
 
-    if (results.some((r) => !!r.subresults)) {
-      return lines(
-        results.map((r) => {
-          const entries: Result[] = [{ ...r, label: 'total' }];
-          delete entries[0].subresults;
-          for (const subresult of r.subresults ?? []) {
-            entries.push(subresult);
-          }
-          return h2(r.label, table(entries, fieldConfigs));
-        }),
+    // Main results table
+    if (hasSubresults) {
+      sections.push(
+        lines(
+          results.map((r) => {
+            const entries: Result[] = [{ ...r, label: 'total' }];
+            delete entries[0].subresults;
+            for (const subresult of r.subresults ?? []) {
+              entries.push(subresult);
+            }
+            return h2(r.label, table(entries, fieldConfigs));
+          }),
+        ),
       );
+    } else {
+      sections.push(table(results, fieldConfigs));
     }
 
-    return table(results, fieldConfigs);
+    // Comparison section (if multiple variations)
+    if (hasMultipleVariations) {
+      sections.push(this.generateComparison(results));
+    }
+
+    return h2(benchmarkName, lines(sections));
   }
 
   private generateComparison(results: Result[]): string {
@@ -201,16 +183,5 @@ export class MarkdownBenchmarkReporter implements BenchmarkReporter {
         columns,
       ),
     );
-  }
-
-  /**
-   * Clears the output file. Useful when re-running benchmarks.
-   */
-  clear(): void {
-    if (existsSync(this.outputFile)) {
-      unlinkSync(this.outputFile);
-    }
-    this.isFirstReport = true;
-    this.accumulatedResults.clear();
   }
 }
