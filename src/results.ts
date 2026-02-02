@@ -1,3 +1,12 @@
+import { spawn } from 'child_process';
+import isCi from 'is-ci';
+
+export type GitInfo = {
+  head: string;
+  sha: string;
+  dirty: boolean;
+};
+
 /**
  * A measurement result.
  */
@@ -66,7 +75,53 @@ export type Result = {
    * The name of the variation that produced this result.
    */
   variationName?: string;
+
+  /**
+   * Git information about the repository state when this result was produced.
+   */
+  git?: GitInfo;
 };
+
+let cachedGitInfo: GitInfo | undefined | null = null;
+export function getGitInfo(): GitInfo | undefined {
+  if (cachedGitInfo !== null) {
+    return cachedGitInfo;
+  }
+
+  if (!isCi) {
+    cachedGitInfo = undefined;
+    return undefined;
+  }
+
+  const getGitOutput = (args: string[]): string => {
+    try {
+      const result = spawn('git', args, {
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      let output = '';
+      result.stdout?.on('data', (data) => {
+        output += data.toString();
+      });
+      result.stdout?.on('end', () => {
+        return output.trim();
+      });
+      return output.trim();
+    } catch {
+      return '';
+    }
+  };
+
+  const head = getGitOutput(['rev-parse', '--abbrev-ref', 'HEAD']);
+  const sha = getGitOutput(['rev-parse', 'HEAD']);
+  const dirty = getGitOutput(['status', '--porcelain']).length > 0;
+
+  cachedGitInfo = {
+    head,
+    sha,
+    dirty,
+  };
+  return cachedGitInfo;
+}
 
 export function calculateResultsFromDurations(
   label: string,
@@ -101,5 +156,6 @@ export function calculateResultsFromDurations(
     failed: errors.length > 0,
     failureRate: errors.length / durations.length,
     ...metadata,
+    ...(getGitInfo() ? { git: getGitInfo() } : {}),
   };
 }
