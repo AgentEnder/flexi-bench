@@ -332,6 +332,50 @@ const benchmark = new Benchmark('My Benchmark', {
 );
 ```
 
+#### Variation Context
+
+For more complex scenarios where you need to pass objects or data directly to the benchmark action, use the context API instead of environment variables:
+
+```javascript
+const { Benchmark, Variation } = require('flexi-bench');
+
+// Define different implementations
+const loopProcessor = {
+  process: (data) => {
+    /* loop */
+  },
+};
+const reduceProcessor = {
+  process: (data) => {
+    /* reduce */
+  },
+};
+
+// Use FromContexts for clean, declarative variation setup
+const benchmark = new Benchmark('Process Data')
+  .withIterations(100)
+  .withVariations(
+    Variation.FromContexts('processor', [
+      ['loop', loopProcessor],
+      ['reduce', reduceProcessor],
+    ]),
+  )
+  .withAction((variation) => {
+    // Use get() to retrieve context data
+    const processor = variation.get('processor');
+    processor.process(data);
+  });
+```
+
+The context API provides:
+
+- `Variation.FromContexts(key, [[name, value], ...])` - Create variations with context (cleanest API)
+- `withContext(key, value)` - Attach custom data to a single variation
+- `get(key)` - Retrieve context data (returns `T | undefined`)
+- `getOrDefault(key, defaultValue)` - Retrieve with fallback value
+
+Use `FromContexts` when creating multiple variations with the same context key - it's cleaner and more concise than individual `withVariation` calls with `withContext`.
+
 Variations can also be added to suites. Variations added to a suite will be applied to all benchmarks in the suite.
 
 For example, the below suite would run each benchmark with 'NO_DAEMON' set to true, and then with 'OTHER_VAR' set to 'value1' for a total of 4 benchmark runs in the suite:
@@ -364,10 +408,239 @@ const suite = new Suite('My Suite')
   );
 ```
 
+## Reporters
+
+Reporters control how benchmark results are output. FlexiBench provides several built-in reporters:
+
+### Console Reporters
+
+```javascript
+const {
+  Benchmark,
+  BenchmarkConsoleReporter,
+  SuiteConsoleReporter,
+} = require('flexi-bench');
+
+// For single benchmarks
+const benchmark = new Benchmark('My Benchmark', {
+  iterations: 10,
+  action: () => {
+    /* ... */
+  },
+  reporter: new BenchmarkConsoleReporter(),
+});
+
+// For suites
+const suite = new Suite('My Suite')
+  .withReporter(new SuiteConsoleReporter())
+  .addBenchmark(benchmark);
+```
+
+Both console reporters support the `NO_COLOR` environment variable for disabling colors:
+
+```bash
+NO_COLOR=1 node my-benchmark.js
+```
+
+Or explicitly via options:
+
+```javascript
+new SuiteConsoleReporter({ noColor: true });
+new BenchmarkConsoleReporter({ noColor: true });
+```
+
+### Markdown Reporters
+
+```javascript
+const {
+  MarkdownBenchmarkReporter,
+  MarkdownSuiteReporter,
+} = require('flexi-bench');
+
+// For single benchmark output
+const benchmarkReporter = new MarkdownBenchmarkReporter({
+  outputFile: 'results.md',
+  fields: ['min', 'average', 'p95', 'max'],
+  append: true, // Set to true to avoid overwriting when running multiple benchmarks
+});
+
+// For suite-level output (recommended)
+const suiteReporter = new MarkdownSuiteReporter({
+  outputFile: 'results.md',
+  title: 'Benchmark Results',
+  fields: ['min', 'average', 'p95', 'max', 'iterations'],
+});
+```
+
+#### Automatic Comparison Tables
+
+When a benchmark has multiple variations, both `MarkdownBenchmarkReporter` and `MarkdownSuiteReporter` automatically generate a comparison table showing:
+
+- Average time for each variation
+- Percentage difference vs the fastest variation
+- Multiplier (e.g., "2.5x" slower)
+- Trophy emoji (🏆) marking the fastest variation
+
+This makes it easy to see which implementation performs best at a glance.
+
+### JSON Reporter
+
+For CI/CD integration:
+
+```javascript
+const { JsonSuiteReporter } = require('flexi-bench');
+
+const reporter = new JsonSuiteReporter({
+  outputFile: 'results.json',
+  pretty: true,
+  includeMetadata: true, // Includes timestamp, platform, node version
+});
+```
+
+### Composite Reporter
+
+Use multiple reporters simultaneously:
+
+```javascript
+const {
+  CompositeReporter,
+  SuiteConsoleReporter,
+  MarkdownSuiteReporter,
+  JsonSuiteReporter,
+} = require('flexi-bench');
+
+const suite = new Suite('My Suite').withReporter(
+  new CompositeReporter([
+    new SuiteConsoleReporter(),
+    new MarkdownSuiteReporter({ outputFile: 'results.md' }),
+    new JsonSuiteReporter({ outputFile: 'results.json' }),
+  ]),
+);
+```
+
+### Custom Reporters
+
+Create custom reporters by implementing the `SuiteReporter` interface:
+
+```typescript
+import { SuiteReporter, Result } from 'flexi-bench';
+
+class MyCustomReporter implements SuiteReporter {
+  // Optional lifecycle hooks
+  onSuiteStart?(suiteName: string): void {
+    console.log(`Starting suite: ${suiteName}`);
+  }
+
+  onBenchmarkStart?(benchmarkName: string): void {
+    console.log(`Running: ${benchmarkName}`);
+  }
+
+  onBenchmarkEnd?(benchmarkName: string, results: Result[]): void {
+    console.log(`Completed: ${benchmarkName}`);
+  }
+
+  // Required: called after all benchmarks complete
+  report(results: Record<string, Result[]>): void {
+    // Process results here
+    for (const [name, result] of Object.entries(results)) {
+      console.log(`${name}: ${result[0].average}ms average`);
+    }
+  }
+}
+```
+
+## Result Type
+
+The `Result` type contains comprehensive information about benchmark runs:
+
+```typescript
+interface Result {
+  // Basic metrics
+  label: string; // Name of benchmark or variation
+  min: number; // Minimum duration (ms)
+  max: number; // Maximum duration (ms)
+  average: number; // Average duration (ms)
+  p95: number; // 95th percentile duration (ms)
+  raw: (number | Error)[]; // Raw durations/errors
+
+  // Failure information
+  failed?: boolean; // Whether any iteration failed
+  failureRate?: number; // Rate of failures (0-1)
+
+  // Metadata (useful for custom reporters)
+  iterations?: number; // Number of iterations run
+  totalDuration?: number; // Total wall-clock time (ms)
+  benchmarkName?: string; // Name of parent benchmark
+  variationName?: string; // Name of variation
+
+  // Subresults from performance observer
+  subresults?: Result[];
+}
+```
+
+The Result type is exported from the main package:
+
+```typescript
+import { Result } from 'flexi-bench';
+```
+
+## Cookbook
+
+### Benchmarking Multiple Implementations
+
+Compare different implementations of the same interface:
+
+```javascript
+const {
+  Suite,
+  Benchmark,
+  Variation,
+  MarkdownSuiteReporter,
+} = require('flexi-bench');
+
+// Define your implementations
+const implementations = {
+  loop: (data) => {
+    /* loop implementation */
+  },
+  reduce: (data) => {
+    /* reduce implementation */
+  },
+};
+
+const suite = new Suite('Implementation Comparison')
+  .withReporter(new MarkdownSuiteReporter({ outputFile: 'results.md' }))
+  .addBenchmark(
+    new Benchmark('Process Data')
+      .withIterations(100)
+      // Create variations with context - no environment variables needed!
+      .withVariations(
+        Variation.FromContexts('impl', [
+          ['loop', implementations.loop],
+          ['reduce', implementations.reduce],
+        ]),
+      )
+      .withAction((variation) => {
+        // Retrieve the implementation directly from context
+        const impl = variation.get('impl');
+        const data = [
+          /* test data */
+        ];
+        impl(data);
+      }),
+  );
+```
+
 ## Examples
 
 See examples folder.
 
-- ./examples/benchmark.ts is the motivation for this project. It benchmarks the performance of Nx commands with and without a daemon.
-- ./examples/performance-observer.ts is a simple example of how to use the PerformanceObserver API to measure the performance of a function.
-- ./examples/simple-command.ts demonstrates how to benchmark a simple command.
+- `./examples/benchmark.ts` - Full benchmark suite with environment variable variations
+- `./examples/performance-observer.ts` - Using PerformanceObserver API
+- `./examples/simple-command.ts` - Benchmarking CLI commands
+- `./examples/multiple-reporters.ts` - Using CompositeReporter for multiple outputs
+- `./examples/custom-reporter.ts` - Creating custom reporters with Result type
+- `./examples/cookbook-different-implementations.ts` - Comparing implementations
+- `./examples/no-color-support.ts` - Disabling colors in CI environments
+- `./examples/markdown-reporter-append.ts` - Using append mode for MarkdownReporter
+- `./examples/markdown-comparison.ts` - Demonstrates automatic comparison tables with variations
