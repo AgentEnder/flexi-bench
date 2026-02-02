@@ -9,8 +9,8 @@ on:
         required: true
         default: 'false'
         options:
-          - true
-          - false
+          - 'true'
+          - 'false'
   workflow_call:
     inputs:
       docs_only:
