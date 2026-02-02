@@ -1,7 +1,7 @@
-import { appendFileSync, writeFileSync, existsSync, unlinkSync } from 'fs';
+import { appendFileSync, existsSync, unlinkSync, writeFileSync } from 'fs';
+import { h1, h2, h3, lines, table } from 'markdown-factory';
 import { BenchmarkReporter } from '../api-types';
 import { Benchmark } from '../benchmark';
-import { h1, h2, h3, lines, table } from 'markdown-factory';
 import { Result } from '../results';
 
 interface ComparisonEntry {
@@ -173,8 +173,17 @@ export class MarkdownBenchmarkReporter implements BenchmarkReporter {
           if (index === 0) {
             entry[field] = 'baseline';
           } else {
-            const factor = value / fastestValue;
-            entry[field] = `${factor.toFixed(2)}x slower`;
+            const faster = value < fastestValue;
+
+            const factor = faster ? fastestValue / value : value / fastestValue;
+
+            if (factor < 1.05) {
+              entry[field] = '≈';
+              continue;
+            } else {
+              entry[field] =
+                `${factor.toFixed(2)}x ${faster ? 'faster' : 'slower'}`;
+            }
           }
         }
       }
