@@ -1,3 +1,4 @@
+import assert from 'assert';
 import { describe, it } from 'node:test';
 import {
   benchmark,
@@ -12,7 +13,6 @@ import {
   xvariation,
 } from './benchmark-runner';
 import { NoopReporter } from './reporters/noop-reporter';
-import assert from 'assert';
 
 const reporter = new NoopReporter();
 
@@ -175,33 +175,77 @@ describe('BenchmarkRunner', () => {
     assert.deepEqual(Object.keys(results), ['Enabled Benchmark']);
   });
 
-  // I'd love for this to work, but it gets more complicated to make benchmarks are
-  // assigned to the correct suite. I'll leave this as a todo for now.
-  it('should work with async declarations', { todo: true }, async () => {
-    let results = Object.fromEntries(
-      await Promise.all([
-        [
-          'foo',
-          suite('foo', (async (s) => {
-            s.withReporter(reporter).withBenchmarkReporter(reporter);
-            benchmark('foo', (async (b) => {
-              b.withAction(() => {});
-            }) as unknown as any);
-          }) as any),
-        ],
-        [
-          'baz',
-          suite('baz', (async (s) => {
-            s.withReporter(reporter).withBenchmarkReporter(reporter);
-            benchmark('baz', (async (b) => {
-              b.withAction(() => {});
-            }) as any);
-          }) as any),
-        ],
-      ]),
+  it('should work with async declarations', async () => {
+    const [fooResults, bazResults] = await Promise.all([
+      suite('foo', async (s) => {
+        s.withReporter(reporter).withBenchmarkReporter(reporter);
+        benchmark('foo', async (b) => {
+          b.withAction(() => {});
+        });
+      }),
+      suite('baz', async (s) => {
+        s.withReporter(reporter).withBenchmarkReporter(reporter);
+        benchmark('baz', async (b) => {
+          b.withAction(() => {});
+        });
+      }),
+    ]);
+    assert.deepEqual(Object.keys(fooResults), ['foo']);
+    assert.deepEqual(Object.keys(bazResults), ['baz']);
+  });
+
+  it('should demonstrate sequential execution of standalone benchmarks with conflicting env vars', async () => {
+    const executionTimeline: string[] = [];
+
+    benchmark('Standalone Benchmark 1', (b) =>
+      b
+        .withAction(async () => {
+          process.env.BENCHMARK_ID = 'bench1';
+          executionTimeline.push('bench1-set-env');
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const id = process.env.BENCHMARK_ID;
+          executionTimeline.push(`bench1-got-env-${id}`);
+          if (id !== 'bench1') {
+            executionTimeline.push(`bench1-concurrency-error-expected-${id}`);
+          }
+        })
+        .withIterations(1)
+        .withReporter(reporter),
     );
-    assert.deepEqual(Object.keys(results), ['foo', 'baz']);
-    assert.deepEqual(Object.keys(results['foo']), ['foo']);
-    assert.deepEqual(Object.keys(results['baz']), ['baz']);
+
+    benchmark('Standalone Benchmark 2', (b) =>
+      b
+        .withAction(async () => {
+          process.env.BENCHMARK_ID = 'bench2';
+          executionTimeline.push('bench2-set-env');
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          const id = process.env.BENCHMARK_ID;
+          executionTimeline.push(`bench2-got-env-${id}`);
+          if (id !== 'bench2') {
+            executionTimeline.push(`bench2-concurrency-error-expected-${id}`);
+          }
+        })
+        .withIterations(1)
+        .withReporter(reporter),
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
+    assert.ok(
+      !executionTimeline.some((t) => t.includes('concurrency-error')),
+      'No benchmarks should have concurrency issues - they should run sequentially',
+    );
+
+    const bench1Errors = executionTimeline.filter((t) =>
+      t.includes('bench1-concurrency-error'),
+    );
+    const bench2Errors = executionTimeline.filter((t) =>
+      t.includes('bench2-concurrency-error'),
+    );
+
+    assert.ok(
+      bench1Errors.length === 0 && bench2Errors.length === 0,
+      'Both benchmarks should have run without detecting concurrent execution issue',
+    );
   });
 });

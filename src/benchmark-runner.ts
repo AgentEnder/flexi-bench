@@ -5,18 +5,25 @@ import { Suite } from './suite';
 import { Variation } from './variation';
 
 let activeSuite: Suite | null = null;
+
+let runningStandaloneBenchmark: Promise<any> | null = null;
 /**
  * Registers a new suite to run.
  * @param name The name of the suite.
- * @param fn Callback to register benchmarks and update the suite.
+ * @param fn Callback to register benchmarks and update the suite. Can be async.
  * @returns The results of the suite. `Record<string, Result[]>`
  */
-export function suite(name: string, fn: (suite: Suite) => Suite | void) {
-  const suite = new Suite(name);
-  activeSuite = suite;
-  const transformed = fn(suite);
-  activeSuite = null;
-  return (transformed ?? suite).run();
+export async function suite(
+  name: string,
+  fn: (suite: Suite) => Suite | void | Promise<Suite | void>,
+) {
+  const s = new Suite(name);
+  const previousActiveSuite = activeSuite;
+  activeSuite = s;
+  const transformed = await fn(s);
+  activeSuite = previousActiveSuite;
+  const suiteToRun = transformed instanceof Suite ? transformed : s;
+  return suiteToRun.run();
 }
 
 let activeBenchmark: Benchmark | null = null;
@@ -24,23 +31,38 @@ let activeBenchmark: Benchmark | null = null;
 /**
  * Registers a new benchmark to run. If inside a {@link suite} callback, it will be added to the suite. Otherwise, it will run immediately.
  * @param name The name of the benchmark.
- * @param fn Callback to register variations and update the benchmark.
+ * @param fn Callback to register variations and update the benchmark. Can be async.
  * @returns If not inside a suite, the results of the benchmark. `Result[]`. Else, `void`.
  */
-export function benchmark(
+export async function benchmark(
   name: string,
   fn: (
     benchmark: Pick<Benchmark, Extract<keyof Benchmark, `with${string}`>>,
-  ) => Benchmark | void,
+  ) => Benchmark | void | Promise<Benchmark | void>,
 ) {
-  const benchmark = new Benchmark(name);
-  activeBenchmark = benchmark;
-  const transformed = fn(benchmark);
-  activeBenchmark = null;
-  if (activeSuite) {
-    activeSuite.addBenchmark(transformed ?? benchmark);
+  const b = new Benchmark(name);
+  const previousActiveBenchmark = activeBenchmark;
+  // Capture activeSuite at call time, not after async callback completes
+  const capturedSuite = activeSuite;
+  activeBenchmark = b;
+  const transformed = await fn(b);
+  activeBenchmark = previousActiveBenchmark;
+
+  const benchmarkToUse = transformed instanceof Benchmark ? transformed : b;
+  if (capturedSuite) {
+    capturedSuite.addBenchmark(benchmarkToUse);
+    return;
   } else {
-    return (transformed ?? benchmark).run();
+    const runPromise = (async () => {
+      if (runningStandaloneBenchmark) {
+        await runningStandaloneBenchmark;
+      }
+      const runResult = await benchmarkToUse.run();
+      runningStandaloneBenchmark = null;
+      return runResult;
+    })();
+    runningStandaloneBenchmark = runPromise;
+    return runPromise;
   }
 }
 
@@ -55,14 +77,15 @@ export function variation(
   name: string,
   fn: (variation: Variation) => Variation | void,
 ) {
-  const variation = new Variation(name);
-  activeVariation = variation;
-  const transformed = fn(variation);
+  const v = new Variation(name);
+  activeVariation = v;
+  const transformed = fn(v);
   activeVariation = null;
+  const variationToUse = transformed instanceof Variation ? transformed : v;
   if (activeBenchmark) {
-    activeBenchmark.withVariation(transformed ?? variation);
+    activeBenchmark.withVariation(variationToUse);
   } else if (activeSuite) {
-    activeSuite.withVariation(transformed ?? variation);
+    activeSuite.withVariation(variationToUse);
   } else {
     throw new Error('`variation` must be called within a benchmark or suite');
   }
