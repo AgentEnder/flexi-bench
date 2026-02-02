@@ -75,6 +75,7 @@ export class Suite {
   }
 
   async run() {
+    this.reporter.setTotalBenchmarks?.(this.benchmarks.length);
     this.reporter.onSuiteStart?.(this.name);
 
     const results: Record<string, Result[]> = {};

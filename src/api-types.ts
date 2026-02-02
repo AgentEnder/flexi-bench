@@ -48,6 +48,12 @@ export interface SuiteReporter {
   onBenchmarkEnd?: (benchmarkName: string, results: Result[]) => void;
 
   /**
+   * Sets the total number of benchmarks in the suite.
+   * @param count - The total number of benchmarks
+   */
+  setTotalBenchmarks?: (count: number) => void;
+
+  /**
    * Called after all benchmarks complete.
    * @param results - All benchmark results keyed by benchmark name
    */
