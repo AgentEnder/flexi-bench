@@ -28,6 +28,29 @@ export interface BenchmarkReporter {
 }
 
 export interface SuiteReporter {
+  /**
+   * Called before the suite starts running.
+   * @param suiteName - The name of the suite
+   */
+  onSuiteStart?: (suiteName: string) => void;
+
+  /**
+   * Called before each benchmark starts.
+   * @param benchmarkName - The name of the benchmark
+   */
+  onBenchmarkStart?: (benchmarkName: string) => void;
+
+  /**
+   * Called after each benchmark completes.
+   * @param benchmarkName - The name of the benchmark
+   * @param results - The results for the benchmark
+   */
+  onBenchmarkEnd?: (benchmarkName: string, results: Result[]) => void;
+
+  /**
+   * Called after all benchmarks complete.
+   * @param results - All benchmark results keyed by benchmark name
+   */
   report: (results: Record<string, Result[]>) => void;
 }
 

@@ -1,18 +1,62 @@
-import {
-  SetupMethod,
-  TeardownMethod,
-  EnvironmentVariableOptions,
-  Action,
-} from './api-types';
+import { EnvironmentVariableOptions } from './api-types';
 import { BenchmarkBase } from './shared-api';
 import { findCombinations } from './utils';
 
 export class Variation extends BenchmarkBase {
   public environment: Partial<NodeJS.ProcessEnv> = {};
   public cliArgs: string[] = [];
+  private context: Map<string, unknown> = new Map();
 
   constructor(public name: string) {
     super();
+  }
+
+  /**
+   * Sets a value in the variation's context.
+   * This allows passing custom data to the action without using environment variables.
+   *
+   * @example
+   * ```typescript
+   * new Variation('fast-impl')
+   *   .withContext('implementation', fastProcessor)
+   *   .withAction((variation) => {
+   *     const impl = variation.get<DataProcessor>('implementation');
+   *     impl.process(data);
+   *   })
+   * ```
+   */
+  withContext<T>(key: string, value: T): this {
+    this.context.set(key, value);
+    return this;
+  }
+
+  /**
+   * Gets a value from the variation's context.
+   * Returns undefined if the key is not found.
+   *
+   * @example
+   * ```typescript
+   * b.withAction((variation) => {
+   *   const driver = variation.get<Driver>('driver');
+   *   driver.connect();
+   * });
+   * ```
+   */
+  get<T>(key: string): T | undefined {
+    return this.context.get(key) as T | undefined;
+  }
+
+  /**
+   * Gets a value from the variation's context with a default value.
+   * Returns the default if the key is not found.
+   *
+   * @example
+   * ```typescript
+   * const iterations = variation.getOrDefault<number>('iterations', 10);
+   * ```
+   */
+  getOrDefault<T>(key: string, defaultValue: T): T {
+    return (this.context.get(key) as T | undefined) ?? defaultValue;
   }
 
   public static FromEnvironmentVariables(
@@ -66,6 +110,37 @@ export class Variation extends BenchmarkBase {
       );
       const label = cliArgs.join(' ');
       return new Variation(label).withCliArgs(...cliArgs);
+    });
+  }
+
+  /**
+   * Creates variations with context values for a single key.
+   * Useful for swapping implementations or configurations.
+   *
+   * @param key The context key to set
+   * @param values Array of [name, value] tuples
+   * @returns An array of variations with context set
+   *
+   * @example
+   * ```typescript
+   * const variations = Variation.FromContext('processor', [
+   *   ['loop', loopProcessor],
+   *   ['reduce', reduceProcessor],
+   * ]);
+   *
+   * benchmark.withVariations(variations);
+   * benchmark.withAction((variation) => {
+   *   const processor = variation.get<DataProcessor>('processor');
+   *   processor.process(data);
+   * });
+   * ```
+   */
+  public static FromContexts<T>(
+    key: string,
+    values: readonly (readonly [name: string, value: T])[],
+  ): Variation[] {
+    return values.map(([name, value]) => {
+      return new Variation(name).withContext(key, value);
     });
   }
 

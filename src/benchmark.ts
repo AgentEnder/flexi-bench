@@ -139,6 +139,7 @@ export class Benchmark extends BenchmarkBase {
       variationIndex++
     ) {
       const variation = this.variations[variationIndex];
+      const variationStartTime = performance.now();
       const iterationResults: (number | Error)[] = [];
       // SETUP
       const oldEnv = { ...process.env };
@@ -244,9 +245,16 @@ export class Benchmark extends BenchmarkBase {
       process.env = oldEnv;
 
       // REPORT
+      const variationEndTime = performance.now();
       const result = calculateResultsFromDurations(
         variation.name,
         iterationResults,
+        {
+          iterations: iterationResults.length,
+          totalDuration: variationEndTime - variationStartTime,
+          benchmarkName: this.name,
+          variationName: variation.name,
+        },
       );
 
       // PerformanceObserver needs a chance to flush
@@ -255,7 +263,10 @@ export class Benchmark extends BenchmarkBase {
         for (const key in measures) {
           result.subresults ??= [];
           result.subresults.push(
-            calculateResultsFromDurations(key, measures[key]),
+            calculateResultsFromDurations(key, measures[key], {
+              benchmarkName: this.name,
+              variationName: variation.name,
+            }),
           );
         }
         this.watcher.clearMeasures();

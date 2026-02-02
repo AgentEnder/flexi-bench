@@ -75,8 +75,12 @@ export class Suite {
   }
 
   async run() {
+    this.reporter.onSuiteStart?.(this.name);
+
     const results: Record<string, Result[]> = {};
     for (const benchmark of this.benchmarks) {
+      this.reporter.onBenchmarkStart?.(benchmark.name);
+
       benchmark.withVariations(this.variations);
       if (this.benchmarkReporter) {
         benchmark.withReporter(this.benchmarkReporter);
@@ -84,9 +88,14 @@ export class Suite {
       if (this.shouldSetErrorStrategyOnBenchmarks) {
         benchmark.withErrorStrategy(this.errorStrategy);
       }
-      results[benchmark.name] = await benchmark.run();
+      const benchmarkResults = await benchmark.run();
+      results[benchmark.name] = benchmarkResults;
+
+      this.reporter.onBenchmarkEnd?.(benchmark.name, benchmarkResults);
     }
+
     this.reporter.report(results);
+
     if (this.errorStrategy === ErrorStrategy.DelayedThrow) {
       const failedResults = Object.values(results).flatMap((r) =>
         r.filter((r) => r.failed),

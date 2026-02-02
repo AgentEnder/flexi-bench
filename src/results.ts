@@ -46,11 +46,37 @@ export type Result = {
    * Subresults, if any. Typically sourced from performance observer.
    */
   subresults?: Result[];
+
+  /**
+   * The number of iterations that were run.
+   */
+  iterations?: number;
+
+  /**
+   * The total wall-clock duration for all iterations in milliseconds.
+   */
+  totalDuration?: number;
+
+  /**
+   * The name of the benchmark that produced this result.
+   */
+  benchmarkName?: string;
+
+  /**
+   * The name of the variation that produced this result.
+   */
+  variationName?: string;
 };
 
 export function calculateResultsFromDurations(
   label: string,
   durations: (number | Error)[],
+  metadata?: {
+    iterations?: number;
+    totalDuration?: number;
+    benchmarkName?: string;
+    variationName?: string;
+  },
 ): Result {
   const errors: Error[] = [];
   const results: number[] = [];
@@ -74,5 +100,6 @@ export function calculateResultsFromDurations(
     raw: durations,
     failed: errors.length > 0,
     failureRate: errors.length / durations.length,
+    ...metadata,
   };
 }
