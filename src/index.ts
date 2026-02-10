@@ -11,5 +11,7 @@ export * from './benchmark';
 export * from './variation';
 export * from './suite';
 export * from './performance-observer';
+export * from './measure';
 export * from './benchmark-runner';
 export * from './results';
+export * from './utils/format';

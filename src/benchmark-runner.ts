@@ -1,6 +1,6 @@
 import { SetupMethod, TeardownMethod } from './api-types';
 import { Benchmark } from './benchmark';
-import { BenchmarkBase } from './shared-api';
+import { Measure } from './measure';
 import { Suite } from './suite';
 import { Variation } from './variation';
 
@@ -152,6 +152,39 @@ export function teardownEach(fn: TeardownMethod) {
     throw new Error(
       '`afterEach` must be called within a variation or benchmark',
     );
+  }
+}
+
+/**
+ * Sets the measure(s) to use for the current benchmark.
+ * Must be called within a benchmark callback.
+ *
+ * The first measure is the primary measure used for the main result.
+ * Additional measures are tracked as subresults.
+ *
+ * @example
+ * ```typescript
+ * import { benchmark, measure, DurationMeasure, MemoryMeasure } from 'flexi-bench';
+ *
+ * benchmark('memory test', (b) => {
+ *   measure(MemoryMeasure.heapUsed);
+ *   b.withAction(() => allocateMemory());
+ * });
+ *
+ * // Track both duration and memory
+ * benchmark('multi-measure test', (b) => {
+ *   measure(DurationMeasure, MemoryMeasure.heapUsed);
+ *   b.withAction(() => allocateMemory());
+ * });
+ * ```
+ *
+ * @param measures One or more measures to use (e.g., DurationMeasure, MemoryMeasure.heapUsed)
+ */
+export function measure(...measures: [Measure, ...(Measure | Measure[])[]]) {
+  if (activeBenchmark) {
+    activeBenchmark.withMeasure(...measures);
+  } else {
+    throw new Error('`measure` must be called within a benchmark');
   }
 }
 

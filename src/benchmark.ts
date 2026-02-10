@@ -1,20 +1,21 @@
-import { BenchmarkConsoleReporter } from './reporters/benchmark-console-reporter';
-import { Variation } from './variation';
+import { spawn } from 'child_process';
 import {
-  TeardownMethod,
-  SetupMethod,
   Action,
+  AggregateBenchmarkError,
   BenchmarkReporter,
   ErrorStrategy,
-  AggregateBenchmarkError,
+  SetupMethod,
+  TeardownMethod,
 } from './api-types';
-import { spawn } from 'child_process';
-import { calculateResultsFromDurations, Result } from './results';
+import { DurationMeasure, Measure } from './measure';
 import {
   PerformanceObserverOptions,
   PerformanceWatcher,
 } from './performance-observer';
+import { BenchmarkConsoleReporter } from './reporters/benchmark-console-reporter';
+import { calculateResultsFromDurations, Result } from './results';
 import { BenchmarkBase } from './shared-api';
+import { Variation } from './variation';
 
 export class Benchmark extends BenchmarkBase {
   public variations: Variation[] = [];
@@ -23,6 +24,7 @@ export class Benchmark extends BenchmarkBase {
   private timeout?: number;
   private reporter: BenchmarkReporter;
   private watcher?: PerformanceWatcher;
+  private measures: Measure<unknown>[] = [DurationMeasure];
 
   public errorStrategy: ErrorStrategy = ErrorStrategy.Continue;
 
@@ -118,6 +120,27 @@ export class Benchmark extends BenchmarkBase {
     return this;
   }
 
+  /**
+   * Set the measure(s) to use for this benchmark.
+   * Defaults to DurationMeasure (time-based measurement).
+   *
+   * The first measure is the primary measure used for the main result.
+   * Additional measures are tracked as subresults.
+   *
+   * @example
+   * ```typescript
+   * // Measure memory instead of time
+   * benchmark.withMeasure(MemoryMeasure.heapUsed)
+   *
+   * // Measure both duration and memory
+   * benchmark.withMeasure(DurationMeasure, MemoryMeasure.heapUsed)
+   * ```
+   */
+  withMeasure(...measures: [Measure, ...(Measure | Measure[])[]]): this {
+    this.measures = measures.flat();
+    return this;
+  }
+
   async run() {
     this.validate();
 
@@ -140,7 +163,9 @@ export class Benchmark extends BenchmarkBase {
     ) {
       const variation = this.variations[variationIndex];
       const variationStartTime = performance.now();
-      const iterationResults: (number | Error)[] = [];
+      const iterationResults: (number | Error)[][] = this.measures.map(
+        () => [],
+      );
       // SETUP
       const oldEnv = { ...process.env };
       process.env = {
@@ -176,14 +201,14 @@ export class Benchmark extends BenchmarkBase {
           )) {
             await setup(variation);
           }
-          const result = await runAndMeasureAction(benchmarkThis, variation);
+          const measureResults = await this.runAndMeasureAction(variation);
           const errorStrategy =
             variation.errorStrategy ?? benchmarkThis.errorStrategy;
           if (
             errorStrategy === ErrorStrategy.Abort &&
-            result instanceof Error
+            measureResults[0] instanceof Error
           ) {
-            reject(result);
+            reject(measureResults[0]);
             return;
           }
           for (const teardown of this.teardownEachMethods.concat(
@@ -191,9 +216,12 @@ export class Benchmark extends BenchmarkBase {
           )) {
             await teardown(variation);
           }
+
           completedIterations++;
           totalCompletedIterations++;
-          iterationResults.push(result);
+          for (let i = 0; i < measureResults.length; i++) {
+            iterationResults[i].push(measureResults[i]);
+          }
           if (
             this.reporter.progress &&
             totalIterations &&
@@ -246,16 +274,34 @@ export class Benchmark extends BenchmarkBase {
 
       // REPORT
       const variationEndTime = performance.now();
+      const primaryResults = iterationResults[0];
       const result = calculateResultsFromDurations(
         variation.name,
-        iterationResults,
+        primaryResults,
         {
-          iterations: iterationResults.length,
+          type: this.measures[0].type,
+          iterations: primaryResults.length,
           totalDuration: variationEndTime - variationStartTime,
           benchmarkName: this.name,
           variationName: variation.name,
         },
       );
+
+      // Additional measures become subresults
+      for (let i = 1; i < this.measures.length; i++) {
+        result.subresults ??= [];
+        result.subresults.push(
+          calculateResultsFromDurations(
+            this.measures[i].label,
+            iterationResults[i],
+            {
+              type: this.measures[i].type,
+              benchmarkName: this.name,
+              variationName: variation.name,
+            },
+          ),
+        );
+      }
 
       // PerformanceObserver needs a chance to flush
       if (this.watcher) {
@@ -264,6 +310,7 @@ export class Benchmark extends BenchmarkBase {
           result.subresults ??= [];
           result.subresults.push(
             calculateResultsFromDurations(key, measures[key], {
+              type: 'time',
               benchmarkName: this.name,
               variationName: variation.name,
             }),
@@ -271,6 +318,7 @@ export class Benchmark extends BenchmarkBase {
         }
         this.watcher.clearMeasures();
       }
+
       results.push(result);
     }
     this.watcher?.disconnect();
@@ -282,6 +330,20 @@ export class Benchmark extends BenchmarkBase {
       throw new AggregateBenchmarkError(results);
     }
     return results;
+  }
+
+  private async runAndMeasureAction(
+    variation: Variation,
+  ): Promise<(number | Error)[]> {
+    try {
+      const states = this.measures.map((m) => m.start());
+      await runAction((variation.action ?? this.action)!, variation);
+      return this.measures.map((m, i) => m.end(states[i]));
+    } catch (e) {
+      const error =
+        e instanceof Error ? e : new Error('Unknown error during action.');
+      return this.measures.map(() => error);
+    }
   }
 
   private validate() {
@@ -313,20 +375,6 @@ export class Benchmark extends BenchmarkBase {
         throw new Error(`Benchmark ${this.name} is missing an action`);
       }
     }
-  }
-}
-
-async function runAndMeasureAction(
-  benchmark: Benchmark,
-  variation: Variation,
-): Promise<number | Error> {
-  try {
-    const a = performance.now();
-    await runAction((variation.action ?? benchmark.action)!, variation);
-    const b = performance.now();
-    return b - a;
-  } catch (e) {
-    return e instanceof Error ? e : new Error('Unknown error during action.');
   }
 }
 
