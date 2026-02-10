@@ -8,8 +8,8 @@
     "url": "https://github.com/AgentEnder/flexi-bench"
   },
   "scripts": {
-    "test": "node --import tsx --test './src/**/*.spec.ts'",
-    "test:watch": "node --import tsx --test --watch './src/**/*.spec.ts'",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build": "tsc -p tsconfig.json",
     "format": "prettier --write src",
     "prepare": "patch-package && nx build flexi-bench"
@@ -31,6 +31,7 @@
     "ts-node": "^10.9.2",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3",
+    "vitest": "^4.0.18",
     "yaml": "^2.4.5"
   },
   "dependencies": {

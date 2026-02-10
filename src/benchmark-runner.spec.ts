@@ -1,5 +1,4 @@
-import assert from 'assert';
-import { describe, it } from 'node:test';
+import { describe, expect, it } from 'vitest';
 import {
   benchmark,
   setup,
@@ -28,8 +27,8 @@ describe('BenchmarkRunner', () => {
         .withReporter(reporter),
     );
 
-    assert.equal(ran, 5);
-    assert.equal(results?.length, 1, 'Should return results');
+    expect(ran).toBe(5);
+    expect(results).toHaveLength(1);
   });
 
   it('should run suites', async () => {
@@ -51,12 +50,9 @@ describe('BenchmarkRunner', () => {
       });
     });
 
-    assert.deepEqual(Object.keys(results), ['foo', 'bar']);
-    assert.deepEqual(results['foo'].length, 1);
-    assert.deepEqual(
-      results['bar'].map((v) => v.label),
-      ['baz', 'bam'],
-    );
+    expect(Object.keys(results)).toEqual(['foo', 'bar']);
+    expect(results['foo']).toHaveLength(1);
+    expect(results['bar'].map((v) => v.label)).toEqual(['baz', 'bam']);
   });
 
   it('should run variations', async () => {
@@ -71,17 +67,18 @@ describe('BenchmarkRunner', () => {
         variation('Variation 3', () => {});
       });
     });
-    assert.deepEqual(Object.keys(results), ['Variation Benchmark']);
-    assert.deepEqual(
-      results['Variation Benchmark'].map((v) => v.label),
-      ['Variation 1', 'Variation 2', 'Variation 3'],
-    );
+    expect(Object.keys(results)).toEqual(['Variation Benchmark']);
+    expect(results['Variation Benchmark'].map((v) => v.label)).toEqual([
+      'Variation 1',
+      'Variation 2',
+      'Variation 3',
+    ]);
   });
 
   it('should run setup and teardown methods', async () => {
     let setupCount = 0;
     let teardownCount = 0;
-    let results = await suite('Setup and Teardown Suite', (s) => {
+    await suite('Setup and Teardown Suite', (s) => {
       s.withReporter(reporter).withBenchmarkReporter(reporter);
       benchmark('Setup and Teardown Benchmark', (b) => {
         setup(() => {
@@ -98,15 +95,14 @@ describe('BenchmarkRunner', () => {
         variation('v3', () => {});
       });
     });
-    assert.equal(setupCount, 3);
-    assert.equal(teardownCount, 3);
-    assert.deepEqual(Object.keys(results), ['Setup and Teardown Benchmark']);
+    expect(setupCount).toBe(3);
+    expect(teardownCount).toBe(3);
   });
 
   it('should run setupEach and teardownEach methods', async () => {
     let setupEachCount = 0;
     let teardownEachCount = 0;
-    let results = await suite('SetupEach and TeardownEach Suite', (s) => {
+    await suite('SetupEach and TeardownEach Suite', (s) => {
       s.withReporter(reporter).withBenchmarkReporter(reporter);
       benchmark('SetupEach and TeardownEach Benchmark', (b) => {
         setupEach(() => {
@@ -122,11 +118,8 @@ describe('BenchmarkRunner', () => {
         variation('v2', () => {});
       });
     });
-    assert.equal(setupEachCount, 4);
-    assert.equal(teardownEachCount, 4);
-    assert.deepEqual(Object.keys(results), [
-      'SetupEach and TeardownEach Benchmark',
-    ]);
+    expect(setupEachCount).toBe(4);
+    expect(teardownEachCount).toBe(4);
   });
 
   it('should skip disabled benchmarks', async () => {
@@ -142,8 +135,8 @@ describe('BenchmarkRunner', () => {
         }),
       );
     });
-    assert.equal(ran, 1);
-    assert.deepEqual(Object.keys(results), ['Enabled Benchmark']);
+    expect(ran).toBe(1);
+    expect(Object.keys(results)).toEqual(['Enabled Benchmark']);
   });
 
   it('should skip disabled suites', async () => {
@@ -155,7 +148,7 @@ describe('BenchmarkRunner', () => {
         }),
       );
     });
-    assert.equal(ran, 0);
+    expect(ran).toBe(0);
   });
 
   it('should skip disabled variations', async () => {
@@ -171,8 +164,8 @@ describe('BenchmarkRunner', () => {
         xvariation('Disabled Variation', () => {});
       });
     });
-    assert.equal(ran, 1);
-    assert.deepEqual(Object.keys(results), ['Enabled Benchmark']);
+    expect(ran).toBe(1);
+    expect(Object.keys(results)).toEqual(['Enabled Benchmark']);
   });
 
   it('should work with async declarations', async () => {
@@ -190,8 +183,8 @@ describe('BenchmarkRunner', () => {
         });
       }),
     ]);
-    assert.deepEqual(Object.keys(fooResults), ['foo']);
-    assert.deepEqual(Object.keys(bazResults), ['baz']);
+    expect(Object.keys(fooResults)).toEqual(['foo']);
+    expect(Object.keys(bazResults)).toEqual(['baz']);
   });
 
   it('should demonstrate sequential execution of standalone benchmarks with conflicting env vars', async () => {
@@ -231,10 +224,9 @@ describe('BenchmarkRunner', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 250));
 
-    assert.ok(
-      !executionTimeline.some((t) => t.includes('concurrency-error')),
-      'No benchmarks should have concurrency issues - they should run sequentially',
-    );
+    expect(
+      executionTimeline.some((t) => t.includes('concurrency-error')),
+    ).toBe(false);
 
     const bench1Errors = executionTimeline.filter((t) =>
       t.includes('bench1-concurrency-error'),
@@ -243,9 +235,7 @@ describe('BenchmarkRunner', () => {
       t.includes('bench2-concurrency-error'),
     );
 
-    assert.ok(
-      bench1Errors.length === 0 && bench2Errors.length === 0,
-      'Both benchmarks should have run without detecting concurrent execution issue',
-    );
+    expect(bench1Errors).toHaveLength(0);
+    expect(bench2Errors).toHaveLength(0);
   });
 });

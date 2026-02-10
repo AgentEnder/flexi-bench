@@ -1,15 +1,10 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
-import {
-  DurationMeasure,
-  MemoryMeasure,
-  createMeasure,
-} from './measure';
+import { describe, expect, it } from 'vitest';
+import { DurationMeasure, MemoryMeasure, createMeasure } from './measure';
 
 describe('DurationMeasure', () => {
   it('should have correct label and type', () => {
-    assert.strictEqual(DurationMeasure.label, 'duration');
-    assert.strictEqual(DurationMeasure.type, 'time');
+    expect(DurationMeasure.label).toBe('duration');
+    expect(DurationMeasure.type).toBe('time');
   });
 
   it('should measure elapsed time', async () => {
@@ -17,27 +12,27 @@ describe('DurationMeasure', () => {
     await new Promise((r) => setTimeout(r, 50));
     const elapsed = DurationMeasure.end(start);
 
-    assert.ok(elapsed >= 40, `Expected >= 40ms, got ${elapsed}ms`);
-    assert.ok(elapsed < 200, `Expected < 200ms, got ${elapsed}ms`);
+    expect(elapsed).toBeGreaterThanOrEqual(40);
+    expect(elapsed).toBeLessThan(200);
   });
 });
 
 describe('MemoryMeasure', () => {
   it('should have correct labels and types', () => {
-    assert.strictEqual(MemoryMeasure.rss.label, 'memory:rss');
-    assert.strictEqual(MemoryMeasure.rss.type, 'size');
+    expect(MemoryMeasure.rss.label).toBe('memory:rss');
+    expect(MemoryMeasure.rss.type).toBe('size');
 
-    assert.strictEqual(MemoryMeasure.heapUsed.label, 'memory:heap_used');
-    assert.strictEqual(MemoryMeasure.heapUsed.type, 'size');
+    expect(MemoryMeasure.heapUsed.label).toBe('memory:heap_used');
+    expect(MemoryMeasure.heapUsed.type).toBe('size');
 
-    assert.strictEqual(MemoryMeasure.heapTotal.label, 'memory:heap_total');
-    assert.strictEqual(MemoryMeasure.heapTotal.type, 'size');
+    expect(MemoryMeasure.heapTotal.label).toBe('memory:heap_total');
+    expect(MemoryMeasure.heapTotal.type).toBe('size');
 
-    assert.strictEqual(MemoryMeasure.external.label, 'memory:external');
-    assert.strictEqual(MemoryMeasure.external.type, 'size');
+    expect(MemoryMeasure.external.label).toBe('memory:external');
+    expect(MemoryMeasure.external.type).toBe('size');
 
-    assert.strictEqual(MemoryMeasure.arrayBuffers.label, 'memory:array_buffers');
-    assert.strictEqual(MemoryMeasure.arrayBuffers.type, 'size');
+    expect(MemoryMeasure.arrayBuffers.label).toBe('memory:array_buffers');
+    expect(MemoryMeasure.arrayBuffers.type).toBe('size');
   });
 
   it('should measure heap memory delta', () => {
@@ -48,17 +43,14 @@ describe('MemoryMeasure', () => {
 
     const delta = MemoryMeasure.heapUsed.end(baseline);
 
-    // Delta should be non-negative (clamped to 0 if GC runs)
-    assert.ok(typeof delta === 'number', 'Delta should be a number');
-    assert.ok(delta >= 0, 'Delta should be >= 0 (clamped)');
+    expect(typeof delta).toBe('number');
+    expect(delta).toBeGreaterThanOrEqual(0);
 
     // Clean up
     arr.length = 0;
   });
 
   it('should clamp negative deltas to zero', () => {
-    // Simulate a scenario where memory decreased (GC ran)
-    // by creating a fake baseline with higher values
     const fakeBaseline: NodeJS.MemoryUsage = {
       rss: Number.MAX_SAFE_INTEGER,
       heapTotal: Number.MAX_SAFE_INTEGER,
@@ -68,23 +60,18 @@ describe('MemoryMeasure', () => {
     };
 
     const delta = MemoryMeasure.heapUsed.end(fakeBaseline);
-
-    // Should be clamped to 0, not a large negative number
-    assert.strictEqual(delta, 0, 'Negative delta should be clamped to 0');
+    expect(delta).toBe(0);
   });
 
   it('should measure ArrayBuffer memory', () => {
     const baseline = MemoryMeasure.arrayBuffers.start();
 
-    // Allocate an ArrayBuffer
     const buffer = new ArrayBuffer(1024 * 1024); // 1MB
     const view = new Uint8Array(buffer);
     view.fill(42);
 
     const delta = MemoryMeasure.arrayBuffers.end(baseline);
-
-    // Should detect the 1MB allocation
-    assert.ok(delta >= 1024 * 1024 - 1024, `Expected ~1MB delta, got ${delta}`);
+    expect(delta).toBeGreaterThanOrEqual(1024 * 1024 - 1024);
   });
 });
 
@@ -101,13 +88,13 @@ describe('createMeasure', () => {
       },
     });
 
-    assert.strictEqual(CounterMeasure.label, 'counter');
-    assert.strictEqual(CounterMeasure.type, undefined);
+    expect(CounterMeasure.label).toBe('counter');
+    expect(CounterMeasure.type).toBeUndefined();
 
     const start = CounterMeasure.start();
     const result = CounterMeasure.end(start);
 
-    assert.strictEqual(result, 5);
+    expect(result).toBe(5);
   });
 
   it('should support custom type', () => {
@@ -118,6 +105,6 @@ describe('createMeasure', () => {
       end: () => 1024,
     });
 
-    assert.strictEqual(CustomMeasure.type, 'size');
+    expect(CustomMeasure.type).toBe('size');
   });
 });

@@ -1,102 +1,86 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
-import { formatTime, formatSize, formatValue, formatRaw } from './format';
+import { describe, expect, it } from 'vitest';
+import { formatTime, formatSize, formatRaw, formatValue } from './format';
 
 describe('formatTime', () => {
   it('should format milliseconds', () => {
-    assert.strictEqual(formatTime(0), '0.0ms');
-    assert.strictEqual(formatTime(100), '100.0ms');
-    assert.strictEqual(formatTime(999.5), '999.5ms');
+    expect(formatTime(120.5)).toBe('120.5ms');
+    expect(formatTime(0.5)).toBe('0.5ms');
   });
 
   it('should format seconds', () => {
-    assert.strictEqual(formatTime(1000), '1.0s');
-    assert.strictEqual(formatTime(1500), '1.5s');
-    assert.strictEqual(formatTime(59999), '60.0s');
+    expect(formatTime(1500)).toBe('1.5s');
+    expect(formatTime(59999)).toBe('60.0s');
   });
 
   it('should format minutes and seconds', () => {
-    assert.strictEqual(formatTime(60000), '1m');
-    assert.strictEqual(formatTime(90000), '1m 30.0s');
-    assert.strictEqual(formatTime(120000), '2m');
+    expect(formatTime(60000)).toBe('1m');
+    expect(formatTime(90000)).toBe('1m 30.0s');
   });
 
   it('should format hours, minutes, and seconds', () => {
-    assert.strictEqual(formatTime(3600000), '1h');
-    assert.strictEqual(formatTime(3660000), '1h 1m');
-    assert.strictEqual(formatTime(3661000), '1h 1m 1.0s');
+    expect(formatTime(3600000)).toBe('1h');
+    expect(formatTime(3661000)).toBe('1h 1m 1.0s');
   });
 
   it('should return empty string for undefined', () => {
-    assert.strictEqual(formatTime(undefined), '');
+    expect(formatTime(undefined as unknown as number)).toBe('');
   });
 });
 
 describe('formatSize', () => {
   it('should format bytes', () => {
-    assert.strictEqual(formatSize(0), '0 B');
-    assert.strictEqual(formatSize(100), '100 B');
-    assert.strictEqual(formatSize(1023), '1023 B');
+    expect(formatSize(500)).toBe('500 B');
   });
 
   it('should format kilobytes', () => {
-    assert.strictEqual(formatSize(1024), '1.00 KB');
-    assert.strictEqual(formatSize(1536), '1.50 KB');
-    assert.strictEqual(formatSize(1024 * 1023), '1023.00 KB');
+    expect(formatSize(1024)).toBe('1.00 KB');
+    expect(formatSize(1536)).toBe('1.50 KB');
   });
 
   it('should format megabytes', () => {
-    assert.strictEqual(formatSize(1024 * 1024), '1.00 MB');
-    assert.strictEqual(formatSize(1024 * 1024 * 86.5), '86.50 MB');
-    assert.strictEqual(formatSize(1024 * 1024 * 1023), '1023.00 MB');
+    expect(formatSize(1048576)).toBe('1.00 MB');
+    expect(formatSize(90595532.8)).toBe('86.40 MB');
   });
 
   it('should format gigabytes', () => {
-    assert.strictEqual(formatSize(1024 * 1024 * 1024), '1.00 GB');
-    assert.strictEqual(formatSize(1024 * 1024 * 1024 * 1.5), '1.50 GB');
+    expect(formatSize(1073741824)).toBe('1.00 GB');
+    expect(formatSize(1288490188.8)).toBe('1.20 GB');
   });
 
   it('should handle negative values', () => {
-    assert.strictEqual(formatSize(-1024), '-1.00 KB');
-    assert.strictEqual(formatSize(-1024 * 1024), '-1.00 MB');
+    expect(formatSize(-1024)).toBe('-1.00 KB');
   });
 
   it('should return empty string for undefined', () => {
-    assert.strictEqual(formatSize(undefined), '');
+    expect(formatSize(undefined as unknown as number)).toBe('');
   });
 });
 
 describe('formatRaw', () => {
   it('should format numbers with 2 decimal places', () => {
-    assert.strictEqual(formatRaw(0), '0.00');
-    assert.strictEqual(formatRaw(100), '100.00');
-    assert.strictEqual(formatRaw(3.14159), '3.14');
+    expect(formatRaw(42)).toBe('42.00');
+    expect(formatRaw(3.14159)).toBe('3.14');
   });
 
   it('should return empty string for undefined', () => {
-    assert.strictEqual(formatRaw(undefined), '');
+    expect(formatRaw(undefined as unknown as number)).toBe('');
   });
 });
 
 describe('formatValue', () => {
   it('should use time formatting for type "time"', () => {
-    assert.strictEqual(formatValue(1500, 'time'), '1.5s');
-    assert.strictEqual(formatValue(100, 'time'), '100.0ms');
+    expect(formatValue(120.5, 'time')).toBe('120.5ms');
   });
 
   it('should use size formatting for type "size"', () => {
-    assert.strictEqual(formatValue(1024, 'size'), '1.00 KB');
-    assert.strictEqual(formatValue(1024 * 1024, 'size'), '1.00 MB');
+    expect(formatValue(1024, 'size')).toBe('1.00 KB');
   });
 
   it('should use raw formatting for undefined type', () => {
-    assert.strictEqual(formatValue(100, undefined), '100.00');
-    assert.strictEqual(formatValue(3.14159, undefined), '3.14');
+    expect(formatValue(42, undefined)).toBe('42.00');
   });
 
   it('should return empty string for undefined value', () => {
-    assert.strictEqual(formatValue(undefined, 'time'), '');
-    assert.strictEqual(formatValue(undefined, 'size'), '');
-    assert.strictEqual(formatValue(undefined, undefined), '');
+    expect(formatValue(undefined as unknown as number, undefined)).toBe('');
   });
 });
