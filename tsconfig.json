@@ -1,18 +1,5 @@
 {
-  "compilerOptions": {
-    "target": "es2022",
-    "module": "commonjs",
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "outDir": "./dist",
-    "types": ["node"],
-    "declaration": true,
-    "paths": {
-      "flexi-bench": ["./src/index.ts"]
-    }
-  },
-  "include": ["src/**/*"],
-  "exclude": ["src/**/*.spec.ts"]
+  "extends": "./tsconfig.base.json",
+  "include": ["examples/**/*.ts", "e2e/**/*.ts", "scripts/**/*.ts"],
+  "references": [{ "path": "packages/flexi-bench" }]
 }

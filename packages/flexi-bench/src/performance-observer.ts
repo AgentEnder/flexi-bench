@@ -1,4 +1,4 @@
-import { PerformanceObserver } from 'node:perf_hooks';
+import { PerformanceEntry, PerformanceObserver } from 'node:perf_hooks';
 
 export class PerformanceWatcher {
   private observer?: PerformanceObserver;

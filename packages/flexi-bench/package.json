@@ -1,0 +1,37 @@
+{
+  "name": "flexi-bench",
+  "version": "0.2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AgentEnder/flexi-bench",
+    "directory": "packages/flexi-bench"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "cli-progress": "catalog:",
+    "is-ci": "catalog:",
+    "markdown-factory": "catalog:"
+  },
+  "devDependencies": {
+    "@types/cli-progress": "catalog:",
+    "@types/is-ci": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "package.json"
+  ],
+  "nx": {}
+}
