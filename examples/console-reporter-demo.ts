@@ -12,7 +12,7 @@
 //   Resize your terminal during the run to see responsive layout changes:
 //   - 80+ columns: Full table format
 //   - 60-79 columns: Compact horizontal format
-//   - <60 columns: Simple vertical format
+//   - &lt;60 columns: Simple vertical format
 // ---
 
 import { benchmark, suite, variation } from '../src';
