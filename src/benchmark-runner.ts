@@ -2,7 +2,10 @@ import { SetupMethod, TeardownMethod } from './api-types';
 import { Benchmark } from './benchmark';
 import { Measure } from './measure';
 import { Suite } from './suite';
+import { Lazy } from './utils/types';
 import { Variation } from './variation';
+
+const collectedLazys: Lazy<any>[] = [];
 
 let activeSuite: Suite | null = null;
 
@@ -11,19 +14,23 @@ let runningStandaloneBenchmark: Promise<any> | null = null;
  * Registers a new suite to run.
  * @param name The name of the suite.
  * @param fn Callback to register benchmarks and update the suite. Can be async.
- * @returns The results of the suite. `Record<string, Result[]>`
+ * @returns A lazy promise that runs the suite when consumed. `Record<string, Result[]>`
  */
-export async function suite(
+export function suite(
   name: string,
   fn: (suite: Suite) => Suite | void | Promise<Suite | void>,
 ) {
   const s = new Suite(name);
-  const previousActiveSuite = activeSuite;
-  activeSuite = s;
-  const transformed = await fn(s);
-  activeSuite = previousActiveSuite;
-  const suiteToRun = transformed instanceof Suite ? transformed : s;
-  return suiteToRun.run();
+  const lazy = new Lazy(async () => {
+    const previousActiveSuite = activeSuite;
+    activeSuite = s;
+    const transformed = await fn(s);
+    activeSuite = previousActiveSuite;
+    const suiteToRun = transformed instanceof Suite ? transformed : s;
+    return suiteToRun.run();
+  });
+  collectedLazys.push(lazy);
+  return lazy;
 }
 
 let activeBenchmark: Benchmark | null = null;
@@ -32,37 +39,51 @@ let activeBenchmark: Benchmark | null = null;
  * Registers a new benchmark to run. If inside a {@link suite} callback, it will be added to the suite. Otherwise, it will run immediately.
  * @param name The name of the benchmark.
  * @param fn Callback to register variations and update the benchmark. Can be async.
- * @returns If not inside a suite, the results of the benchmark. `Result[]`. Else, `void`.
+ * @returns If not inside a suite, a lazy promise for the benchmark results. `Result[]`. Else, a promise that resolves when setup is complete.
  */
-export async function benchmark(
+export function benchmark(
   name: string,
   fn: (
     benchmark: Pick<Benchmark, Extract<keyof Benchmark, `with${string}`>>,
   ) => Benchmark | void | Promise<Benchmark | void>,
 ) {
   const b = new Benchmark(name);
-  const previousActiveBenchmark = activeBenchmark;
-  // Capture activeSuite at call time, not after async callback completes
   const capturedSuite = activeSuite;
-  activeBenchmark = b;
-  const transformed = await fn(b);
-  activeBenchmark = previousActiveBenchmark;
 
-  const benchmarkToUse = transformed instanceof Benchmark ? transformed : b;
   if (capturedSuite) {
-    capturedSuite.addBenchmark(benchmarkToUse);
-    return;
+    // In-suite: run the callback (may be async) then register the benchmark.
+    // Returns a promise so the suite's Lazy executor can await it if needed.
+    const setupPromise = (async () => {
+      const previousActiveBenchmark = activeBenchmark;
+      activeBenchmark = b;
+      const transformed = await fn(b);
+      activeBenchmark = previousActiveBenchmark;
+      const benchmarkToUse =
+        transformed instanceof Benchmark ? transformed : b;
+      capturedSuite.addBenchmark(benchmarkToUse);
+    })();
+    return setupPromise;
   } else {
-    const runPromise = (async () => {
-      if (runningStandaloneBenchmark) {
-        await runningStandaloneBenchmark;
+    // Standalone: return a Lazy that sets up and runs the benchmark.
+    const previousRunning = runningStandaloneBenchmark;
+    const lazy = new Lazy(async () => {
+      const previousActiveBenchmark = activeBenchmark;
+      activeBenchmark = b;
+      const transformed = await fn(b);
+      activeBenchmark = previousActiveBenchmark;
+      const benchmarkToUse =
+        transformed instanceof Benchmark ? transformed : b;
+
+      if (previousRunning) {
+        await previousRunning;
       }
       const runResult = await benchmarkToUse.run();
       runningStandaloneBenchmark = null;
       return runResult;
-    })();
-    runningStandaloneBenchmark = runPromise;
-    return runPromise;
+    });
+    runningStandaloneBenchmark = lazy;
+    collectedLazys.push(lazy);
+    return lazy;
   }
 }
 
@@ -186,10 +207,7 @@ export function teardownEach(fn: TeardownMethod) {
  *
  * @param measures One or more measures to use (e.g., DurationMeasure, MemoryMeasure.heapUsed)
  */
-export function measure(
-  first: Measure,
-  ...rest: (Measure | Measure[])[]
-) {
+export function measure(first: Measure, ...rest: (Measure | Measure[])[]) {
   if (activeBenchmark) {
     activeBenchmark.withMeasure(first, ...rest);
   } else if (activeSuite) {
@@ -239,14 +257,21 @@ export const it = benchmark;
 
 // DISABLED FUNCTIONS
 export const xsuite: typeof suite = () => {
-  return Promise.resolve({});
+  return Promise.resolve({}) as any;
 };
 export const xdescribe = xsuite;
 
 export const xbenchmark: typeof benchmark = () => {
-  return Promise.resolve([]);
+  return Promise.resolve([]) as any;
 };
 export const xtest = xbenchmark;
 export const xit = xbenchmark;
 
 export const xvariation: typeof variation = () => {};
+
+process.on('beforeExit', () => {
+  const pending = collectedLazys.splice(0);
+  if (pending.length > 0) {
+    Promise.all(pending);
+  }
+});
