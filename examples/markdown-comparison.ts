@@ -18,7 +18,7 @@ import {
   MarkdownSuiteReporter,
   Suite,
   Variation,
-} from '../src/index';
+} from 'flexi-bench';
 
 // Simple sorting implementations to compare
 const bubbleSort = (arr: number[]) => {

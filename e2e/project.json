@@ -2,7 +2,8 @@
   "name": "e2e",
   "targets": {
     "e2e": {
-      "command": "tsx {projectRoot}/run-e2e.ts"
+      "command": "tsx {projectRoot}/run-e2e.ts",
+      "dependsOn": ["flexi-bench:build"]
     }
   }
 }

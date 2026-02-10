@@ -19,7 +19,7 @@ import {
   SuiteReporter,
   Result,
   MarkdownSuiteReporter,
-} from '../src/index';
+} from 'flexi-bench';
 
 /**
  * A custom reporter that outputs a summary with statistics

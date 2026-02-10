@@ -15,7 +15,7 @@
 //   - &lt;60 columns: Simple vertical format
 // ---
 
-import { benchmark, suite, variation } from '../src';
+import { benchmark, suite, variation } from 'flexi-bench';
 
 suite('Console Reporter Demo', () => {
   benchmark('Array Operations', (b) => {

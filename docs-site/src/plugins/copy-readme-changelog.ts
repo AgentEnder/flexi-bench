@@ -5,9 +5,12 @@ import { join } from 'node:path';
 import { stringify } from 'yaml';
 
 export async function CopyReadmeAndChangelogPlugin(context: LoadContext) {
-  const readme = readFileSync(join(workspaceRoot, './README.md'), 'utf-8');
+  const readme = readFileSync(
+    join(workspaceRoot, './packages/flexi-bench/README.md'),
+    'utf-8',
+  );
   const changelog = readFileSync(
-    join(workspaceRoot, './CHANGELOG.md'),
+    join(workspaceRoot, './packages/flexi-bench/CHANGELOG.md'),
     'utf-8',
   );
 

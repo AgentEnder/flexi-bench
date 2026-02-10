@@ -20,7 +20,7 @@ import {
   Suite,
   SuiteConsoleReporter,
   Variation,
-} from '../src/index';
+} from 'flexi-bench';
 
 (async () => {
   const results = await new Suite('Multiple Reporters Example')

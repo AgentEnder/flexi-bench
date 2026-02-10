@@ -37,8 +37,8 @@ const config: Config = {
     [
       'docusaurus-plugin-typedoc',
       {
-        entryPoints: ['../src/index.ts'],
-        tsconfig: '../tsconfig.json',
+        entryPoints: ['../packages/flexi-bench/src/index.ts'],
+        tsconfig: '../packages/flexi-bench/tsconfig.lib.json',
         out: './docs/api',
         readme: 'none',
         name: 'API Reference',

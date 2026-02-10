@@ -20,7 +20,7 @@ import {
   MarkdownSuiteReporter,
   Suite,
   Variation,
-} from '../src/index';
+} from 'flexi-bench';
 
 // Define a common interface
 interface DataProcessor {

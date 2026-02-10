@@ -6,7 +6,7 @@
 // ---
 import { ExecSyncOptions, execSync } from 'child_process';
 
-import { benchmark, setup, setupEach, xsuite, Variation } from '../src/index';
+import { benchmark, setup, setupEach, xsuite, Variation } from 'flexi-bench';
 
 const ITERATIONS = 3;
 

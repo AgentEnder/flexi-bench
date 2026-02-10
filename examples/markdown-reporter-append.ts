@@ -17,7 +17,7 @@ import {
   MarkdownBenchmarkReporter,
   MarkdownSuiteReporter,
   Suite,
-} from '../src/index';
+} from 'flexi-bench';
 
 (async () => {
   // Example 1: Without append (default) - last benchmark overwrites the file

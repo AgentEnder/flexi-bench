@@ -18,7 +18,7 @@ import {
   SuiteConsoleReporter,
   BenchmarkConsoleReporter,
   MarkdownSuiteReporter,
-} from '../src/index';
+} from 'flexi-bench';
 
 (async () => {
   console.log('=== Example 1: Default (colors enabled if supported) ===\n');

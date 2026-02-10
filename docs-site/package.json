@@ -10,23 +10,27 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@docusaurus/core": "3.4.0",
-    "@docusaurus/preset-classic": "3.4.0",
-    "@mdx-js/react": "^3.0.0",
-    "clsx": "^2.0.0",
-    "prism-react-renderer": "^2.3.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "@docusaurus/core": "catalog:",
+    "@docusaurus/preset-classic": "catalog:",
+    "@mdx-js/react": "catalog:",
+    "clsx": "catalog:",
+    "prism-react-renderer": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "devDependencies": {
-    "@docusaurus/module-type-aliases": "3.4.0",
-    "@docusaurus/tsconfig": "3.4.0",
-    "@docusaurus/types": "3.4.0",
-    "docusaurus-plugin-typedoc": "^1.0.3",
-    "remark-github": "^12.0.0",
-    "typedoc": "^0.26.4",
-    "typedoc-plugin-markdown": "^4.2.1",
-    "typescript": "~5.2.2"
+    "@docusaurus/module-type-aliases": "catalog:",
+    "@docusaurus/theme-classic": "catalog:",
+    "@docusaurus/tsconfig": "catalog:",
+    "@docusaurus/types": "catalog:",
+    "@nx/devkit": "catalog:",
+    "@types/node": "catalog:",
+    "markdown-factory": "catalog:",
+    "docusaurus-plugin-typedoc": "catalog:",
+    "remark-github": "catalog:",
+    "typedoc": "catalog:",
+    "typedoc-plugin-markdown": "catalog:",
+    "typescript": "catalog:"
   },
   "browserslist": {
     "production": [
@@ -63,8 +67,8 @@
         "inputs": [
           "{projectRoot}/**/*",
           "{projectRoot}/docusaurus.config.js",
-          "{workspaceRoot}/README.md",
-          "{workspaceRoot}/CHANGELOG.md",
+          "{workspaceRoot}/packages/flexi-bench/README.md",
+          "{workspaceRoot}/packages/flexi-bench/CHANGELOG.md",
           "!{projectRoot}/src/**/*.d.ts",
           "!{projectRoot}/docs/examples",
           "!{projectRoot}/docs/api"
