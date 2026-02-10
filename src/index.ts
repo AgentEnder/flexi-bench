@@ -15,3 +15,4 @@ export * from './measure';
 export * from './benchmark-runner';
 export * from './results';
 export * from './utils/format';
+export * from './utils/types';
