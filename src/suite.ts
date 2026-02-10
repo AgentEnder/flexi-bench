@@ -5,6 +5,7 @@ import {
   SuiteReporter,
 } from './api-types';
 import { Benchmark } from './benchmark';
+import { Measure } from './measure';
 import { SuiteConsoleReporter } from './reporters/suite-console-reporter';
 import { Result } from './results';
 import { Variation } from './variation';
@@ -19,6 +20,7 @@ export class Suite {
 
   private reporter: SuiteReporter;
   private benchmarkReporter?: BenchmarkReporter;
+  private measures?: Measure[];
   private errorStrategy: ErrorStrategy = ErrorStrategy.Continue;
   private shouldSetErrorStrategyOnBenchmarks = false;
 
@@ -57,6 +59,17 @@ export class Suite {
   }
 
   /**
+   * Set the measure(s) to use for all benchmarks in this suite.
+   * Individual benchmarks can override this by calling their own withMeasure.
+   *
+   * @param measures One or more measures to use
+   */
+  withMeasure(...measures: [Measure, ...(Measure | Measure[])[]]): this {
+    this.measures = measures.flat();
+    return this;
+  }
+
+  /**
    * Sets the error strategy for the suite and optionally for the benchmarks.
    * @param errorStrategy Determines what to do when an error occurs during a benchmark run. See {@link ErrorStrategy}
    * @param opts Options for the error strategy. If `shouldSetOnBenchmarks` is true, the error strategy will be set on all benchmarks in the suite.
@@ -83,6 +96,9 @@ export class Suite {
       this.reporter.onBenchmarkStart?.(benchmark.name);
 
       benchmark.withVariations(this.variations);
+      if (this.measures) {
+        benchmark.withMeasure(...(this.measures as [Measure, ...Measure[]]));
+      }
       if (this.benchmarkReporter) {
         benchmark.withReporter(this.benchmarkReporter);
       }

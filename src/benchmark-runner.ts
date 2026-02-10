@@ -156,35 +156,46 @@ export function teardownEach(fn: TeardownMethod) {
 }
 
 /**
- * Sets the measure(s) to use for the current benchmark.
- * Must be called within a benchmark callback.
+ * Sets the measure(s) to use for the current benchmark or suite.
+ * Must be called within a benchmark or suite callback.
+ *
+ * When called within a suite, the measures apply to all benchmarks in the suite.
+ * When called within a benchmark, the measures apply to that benchmark only
+ * (overriding any suite-level measures).
  *
  * The first measure is the primary measure used for the main result.
  * Additional measures are tracked as subresults.
  *
  * @example
  * ```typescript
- * import { benchmark, measure, DurationMeasure, MemoryMeasure } from 'flexi-bench';
+ * import { benchmark, suite, measure, DurationMeasure, MemoryMeasure } from 'flexi-bench';
  *
+ * // Per-benchmark measure
  * benchmark('memory test', (b) => {
  *   measure(MemoryMeasure.heapUsed);
  *   b.withAction(() => allocateMemory());
  * });
  *
- * // Track both duration and memory
- * benchmark('multi-measure test', (b) => {
+ * // Suite-wide measure
+ * suite('memory suite', () => {
  *   measure(DurationMeasure, MemoryMeasure.heapUsed);
- *   b.withAction(() => allocateMemory());
+ *   benchmark('test1', (b) => { b.withAction(() => work()); });
+ *   benchmark('test2', (b) => { b.withAction(() => moreWork()); });
  * });
  * ```
  *
  * @param measures One or more measures to use (e.g., DurationMeasure, MemoryMeasure.heapUsed)
  */
-export function measure(...measures: [Measure, ...(Measure | Measure[])[]]) {
+export function measure(
+  first: Measure,
+  ...rest: (Measure | Measure[])[]
+) {
   if (activeBenchmark) {
-    activeBenchmark.withMeasure(...measures);
+    activeBenchmark.withMeasure(first, ...rest);
+  } else if (activeSuite) {
+    activeSuite.withMeasure(first, ...rest);
   } else {
-    throw new Error('`measure` must be called within a benchmark');
+    throw new Error('`measure` must be called within a benchmark or suite');
   }
 }
 
