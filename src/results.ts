@@ -8,6 +8,14 @@ export type GitInfo = {
 };
 
 /**
+ * The type of measurement, which determines formatting.
+ * - 'time': Formatted as ms, s, m, h (e.g., "120.5 ms", "1.2 s")
+ * - 'size': Formatted as B, KB, MB, GB (e.g., "86.4 MB", "1.2 GB")
+ * - undefined: Raw numbers with no unit conversion
+ */
+export type ResultType = 'time' | 'size';
+
+/**
  * A measurement result.
  */
 export type Result = {
@@ -17,22 +25,28 @@ export type Result = {
   label: string;
 
   /**
-   * The minimum duration.
+   * The type of measurement (time, size, or raw number if undefined).
+   * Determines how values are formatted in reports.
+   */
+  type?: ResultType;
+
+  /**
+   * The minimum value.
    */
   min: number;
 
   /**
-   * The maximum duration.
+   * The maximum value.
    */
   max: number;
 
   /**
-   * The average duration.
+   * The average value.
    */
   average: number;
 
   /**
-   * The 95th percentile duration.
+   * The 95th percentile value.
    */
   p95: number;
 
@@ -127,6 +141,7 @@ export function calculateResultsFromDurations(
   label: string,
   durations: (number | Error)[],
   metadata?: {
+    type?: ResultType;
     iterations?: number;
     totalDuration?: number;
     benchmarkName?: string;
