@@ -1,6 +1,7 @@
 import { table } from 'markdown-factory';
 import { Result } from '../results';
 import { ANSI, getTerminalWidth } from './terminal';
+import { formatValue } from './format';
 
 export interface Column {
   field: keyof Result;
@@ -84,7 +85,7 @@ export function renderResults(
 function renderTableString(
   results: Result[],
   columns: Column[],
-  noColor: boolean,
+  _noColor: boolean,
 ): string {
   const fieldConfigs = columns.map((col) => ({
     field: col.field,
@@ -95,7 +96,7 @@ function renderTableString(
         return String(value);
       }
       if (typeof value === 'number') {
-        return value.toFixed(2);
+        return formatValue(value, item.type);
       }
       return String(value ?? '');
     },

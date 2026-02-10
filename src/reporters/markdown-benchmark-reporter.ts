@@ -3,6 +3,7 @@ import { h1, h2, h3, lines, table } from 'markdown-factory';
 import { BenchmarkReporter } from '../api-types';
 import { Benchmark } from '../benchmark';
 import { Result } from '../results';
+import { formatValue } from '../utils/format';
 
 interface ComparisonEntry {
   label: string;
@@ -25,45 +26,6 @@ export class MarkdownBenchmarkReporter implements BenchmarkReporter {
     this.outputFile = opts.outputFile;
     this.fields = opts.fields ?? ['min', 'average', 'p95', 'max'];
     this.append = opts.append ?? false;
-  }
-
-  private formatDuration(value: number | undefined): string {
-    if (value === undefined) return '';
-
-    const totalMs = value;
-
-    const hours = Math.floor(totalMs / (1000 * 60 * 60));
-    const remainingAfterHours = totalMs % (1000 * 60 * 60);
-
-    const minutes = Math.floor(remainingAfterHours / (1000 * 60));
-    const remainingAfterMinutes = remainingAfterHours % (1000 * 60);
-
-    const seconds = Math.floor(remainingAfterMinutes / 1000);
-    const milliseconds = remainingAfterMinutes % 1000;
-
-    const parts: string[] = [];
-
-    if (hours > 0) {
-      parts.push(`${hours}h`);
-      if (minutes > 0) parts.push(`${minutes}m`);
-      if (seconds > 0 || milliseconds > 0) {
-        const totalSeconds = seconds + milliseconds / 1000;
-        parts.push(`${totalSeconds.toFixed(1)}s`);
-      }
-    } else if (minutes > 0) {
-      parts.push(`${minutes}m`);
-      if (seconds > 0 || milliseconds > 0) {
-        const totalSeconds = seconds + milliseconds / 1000;
-        parts.push(`${totalSeconds.toFixed(1)}s`);
-      }
-    } else if (seconds > 0) {
-      const totalSeconds = seconds + milliseconds / 1000;
-      parts.push(`${totalSeconds.toFixed(1)}s`);
-    } else {
-      parts.push(`${milliseconds.toFixed(1)}ms`);
-    }
-
-    return parts.join(' ');
   }
 
   report: (benchmark: Benchmark, results: Result[]) => void = (
@@ -125,7 +87,7 @@ export class MarkdownBenchmarkReporter implements BenchmarkReporter {
             return String(value ?? '');
           }
           if (typeof value === 'number') {
-            return this.formatDuration(value);
+            return formatValue(value, item.type);
           }
           return String(value ?? '');
         },
@@ -149,8 +111,14 @@ export class MarkdownBenchmarkReporter implements BenchmarkReporter {
   }
 
   private generateComparison(results: Result[]): string {
+    // Sort by average - lower is better for both time and memory
     const sorted = [...results].sort((a, b) => a.average - b.average);
-    const fastest = sorted[0];
+    const best = sorted[0];
+
+    // Determine comparison terminology based on result type
+    const resultType = results[0]?.type;
+    const betterWord = resultType === 'size' ? 'less' : 'faster';
+    const worseWord = resultType === 'size' ? 'more' : 'slower';
 
     const hasVaryingIterations = results.some(
       (r) => r.iterations !== results[0].iterations,
@@ -169,20 +137,31 @@ export class MarkdownBenchmarkReporter implements BenchmarkReporter {
           }
         } else {
           const value = result[field] as number;
-          const fastestValue = fastest[field] as number;
+          const bestValue = best[field] as number;
           if (index === 0) {
             entry[field] = 'baseline';
           } else {
-            const faster = value < fastestValue;
+            // Handle edge cases where either value is 0
+            // When zeros are involved, factor comparisons don't make sense
+            if (bestValue === 0 && value === 0) {
+              entry[field] = '≈';
+              continue;
+            }
+            if (bestValue === 0 || value === 0) {
+              // Just show the actual value when zeros are involved
+              entry[field] = formatValue(value, resultType) || '0';
+              continue;
+            }
 
-            const factor = faster ? fastestValue / value : value / fastestValue;
+            const isBetter = value < bestValue;
+            const factor = isBetter ? bestValue / value : value / bestValue;
 
             if (factor < 1.05) {
               entry[field] = '≈';
               continue;
             } else {
               entry[field] =
-                `${factor.toFixed(2)}x ${faster ? 'faster' : 'slower'}`;
+                `${factor.toFixed(2)}x ${isBetter ? betterWord : worseWord}`;
             }
           }
         }
