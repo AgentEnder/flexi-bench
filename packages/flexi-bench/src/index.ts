@@ -18,3 +18,4 @@ export * from './results';
 export * from './blackhole';
 export * from './utils/format';
 export * from './utils/types';
+export * from './cli/load-file';

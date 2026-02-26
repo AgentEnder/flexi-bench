@@ -3,6 +3,10 @@
   "version": "0.2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "flexibench": "./bin/flexibench.js",
+    "flexi-bench": "./bin/flexibench.js"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/AgentEnder/flexi-bench",
@@ -15,9 +19,22 @@
   },
   "license": "MIT",
   "dependencies": {
+    "cli-forge": "catalog:",
     "cli-progress": "catalog:",
     "is-ci": "catalog:",
     "markdown-factory": "catalog:"
+  },
+  "peerDependencies": {
+    "tsx": "catalog:",
+    "@flexi-bench/tui": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "tsx": {
+      "optional": true
+    },
+    "@flexi-bench/tui": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/cli-progress": "catalog:",
@@ -27,6 +44,7 @@
     "vitest": "catalog:"
   },
   "files": [
+    "bin",
     "dist",
     "README.md",
     "LICENSE",

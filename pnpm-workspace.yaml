@@ -20,6 +20,7 @@ catalog:
   "@types/cli-progress": "^3.11.6"
   "@types/is-ci": "^3.0.4"
   "@types/node": "^20.14.10"
+  cli-forge: "^1.2.0"
   cli-progress: "^3.12.0"
   clsx: "^2.0.0"
   docusaurus-plugin-typedoc: "^1.4.2"
