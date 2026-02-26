@@ -50,10 +50,7 @@ const nativeSort = (arr: number[]) => [...arr].sort((a, b) => a - b);
     Math.floor(Math.random() * 1000),
   );
 
-  console.log('Running sorting algorithm comparison...\n');
-
   // Example 1: MarkdownSuiteReporter with multiple variations
-  console.log('1. Suite Reporter (with comparison tables):');
   await new Suite('Sorting Algorithms Comparison')
     .withReporter(
       new MarkdownSuiteReporter({
@@ -79,11 +76,7 @@ const nativeSort = (arr: number[]) => [...arr].sort((a, b) => a - b);
     )
     .run();
 
-  console.log('   ✓ Generated: ./examples/output/sorting-comparison.md');
-  console.log('   (Includes comparison table showing relative performance)\n');
-
   // Example 2: MarkdownBenchmarkReporter with append mode
-  console.log('2. Benchmark Reporter with append mode:');
   const reporter = new MarkdownBenchmarkReporter({
     outputFile: './examples/output/benchmark-append-comparison.results.md',
     fields: ['min', 'average', 'p95', 'max'],
@@ -144,13 +137,6 @@ const nativeSort = (arr: number[]) => [...arr].sort((a, b) => a - b);
     )
     .run();
 
-  console.log(
-    '   ✓ Generated: ./examples/output/benchmark-append-comparison.results.md',
-  );
-  console.log('   (Each benchmark has its own comparison table)\n');
-
-  // Example 3: Single benchmark (no comparison)
-  console.log('3. Single benchmark (no comparison table):');
   await new Suite('Single Benchmark')
     .withReporter(
       new MarkdownSuiteReporter({
@@ -166,24 +152,4 @@ const nativeSort = (arr: number[]) => [...arr].sort((a, b) => a - b);
       }),
     )
     .run();
-
-  console.log('   ✓ Generated: ./examples/output/single-benchmark.results.md');
-  console.log('   (No comparison table since only one variation)\n');
-
-  // Results explanation
-  console.log('─'.repeat(60));
-  console.log('COMPARISON TABLE FEATURE:');
-  console.log('─'.repeat(60));
-  console.log('When a benchmark has multiple variations, the markdown');
-  console.log('reporters now automatically generate a "Comparison" section');
-  console.log('showing:');
-  console.log('');
-  console.log('  • Average time for each variation');
-  console.log('  • Percentage difference vs the fastest');
-  console.log('  • Multiplier (e.g., 2.5x slower)');
-  console.log('  • Trophy emoji (🏆) for the winner');
-  console.log('');
-  console.log('This makes it easy to see which implementation is fastest');
-  console.log('at a glance in your benchmark reports!');
-  console.log('─'.repeat(60));
 })();

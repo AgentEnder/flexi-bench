@@ -58,7 +58,7 @@ async function errorStrategyAbort() {
 // This is useful when you want the benchmark to continue running and collect results, but still exit with an error if any of the benchmarks fail.
 async function errorStrategyDelayedThrow() {
   try {
-    const results = await benchmark('Failing Action (delayed-throw)', (b) => {
+    await benchmark('Failing Action (delayed-throw)', (b) => {
       b.withAction(() => {
         if (Math.random() > 0.5) throw new Error('This action failed');
       })
@@ -66,7 +66,6 @@ async function errorStrategyDelayedThrow() {
         .withErrorStrategy(ErrorStrategy.DelayedThrow)
         .withReporter(reporter);
     });
-    console.log(results);
   } catch (e) {
     if (e instanceof AggregateBenchmarkError) {
       console.log(

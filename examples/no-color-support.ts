@@ -13,16 +13,13 @@
  */
 
 import {
-  Suite,
   Benchmark,
-  SuiteConsoleReporter,
   BenchmarkConsoleReporter,
-  MarkdownSuiteReporter,
+  Suite,
+  SuiteConsoleReporter,
 } from 'flexi-bench';
 
 (async () => {
-  console.log('=== Example 1: Default (colors enabled if supported) ===\n');
-
   await new Suite('Default Colors')
     .withReporter(new SuiteConsoleReporter())
     .addBenchmark(
