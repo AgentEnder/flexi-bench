@@ -87,7 +87,7 @@ export class BenchmarkConsoleReporter implements BenchmarkReporter {
       } else {
         for (let i = 0; i < this.dashboardLineCount; i++) {
           process.stdout.write(`${ANSI.MOVE_CURSOR_HOME}${ANSI.CLEAR_LINE}`);
-          process.stdout.write(`${ANSI.MOVE_CURSOR_DOWN}`);
+          process.stdout.write(ANSI.MOVE_CURSOR_DOWN(1));
         }
         process.stdout.write(`${ANSI.MOVE_CURSOR_HOME}`);
       }
