@@ -13,6 +13,7 @@ import {
   PerformanceWatcher,
 } from './performance-observer';
 import { BenchmarkConsoleReporter } from './reporters/benchmark-console-reporter';
+import { blackhole } from './blackhole';
 import { calculateResultsFromDurations, Result } from './results';
 import { BenchmarkBase } from './shared-api';
 import { Variation } from './variation';
@@ -337,13 +338,21 @@ export class Benchmark extends BenchmarkBase {
   ): Promise<(number | Error)[]> {
     try {
       const states = this.measures.map((m) => m.start());
-      await runAction((variation.action ?? this.action)!, variation);
+      await this.runActionWithBlackhole(variation);
       return this.measures.map((m, i) => m.end(states[i]));
     } catch (e) {
       const error =
         e instanceof Error ? e : new Error('Unknown error during action.');
       return this.measures.map(() => error);
     }
+  }
+
+  private async runActionWithBlackhole(variation: Variation): Promise<void> {
+    const actionResult = await runAction(
+      (variation.action ?? this.action)!,
+      variation,
+    );
+    blackhole(actionResult);
   }
 
   private validate() {
@@ -378,7 +387,10 @@ export class Benchmark extends BenchmarkBase {
   }
 }
 
-async function runAction(action: Action, variation: Variation) {
+async function runAction(
+  action: Action,
+  variation: Variation,
+): Promise<unknown> {
   if (typeof action === 'string') {
     return new Promise<void>((resolve, reject) => {
       const child = spawn(action, variation.cliArgs, {

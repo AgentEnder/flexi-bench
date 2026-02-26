@@ -7,7 +7,7 @@ export type MaybePromise<T> = T | Promise<T>;
 export type SetupMethod = (variation: Variation) => MaybePromise<void>;
 export type TeardownMethod = (variation: Variation) => MaybePromise<void>;
 
-export type ActionMethod = (variation: Variation) => MaybePromise<void>;
+export type ActionMethod = (variation: Variation) => MaybePromise<unknown>;
 export type ActionCommand = string;
 export type Action = ActionMethod | ActionCommand;
 

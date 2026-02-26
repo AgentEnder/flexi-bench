@@ -21,6 +21,7 @@ pnpm add --save-dev flexi-bench
 - [Variations](#variations): Run the same benchmark with different configurations.
 - [Setup and Teardown](#setup-and-teardown): Run setup and teardown code before and after the benchmark.
 - [Commands](#commands): Run simple commands as benchmarks.
+- [Blackhole Result Sink](#blackhole-result-sink): Prevent dead-code elimination for callback benchmarks.
 
 ## Usage
 
@@ -194,6 +195,31 @@ benchmark('My Benchmark', (b) => {
 
   b.withIterations(10).withAction(() => {
     array.sort();
+  });
+});
+```
+
+#### Blackhole Result Sink
+
+Callback actions may compute values that are otherwise unused. In some cases, engines can optimize those computations aggressively. FlexiBench automatically consumes callback return values through an internal blackhole sink on every iteration.
+
+```javascript
+benchmark('sum array', (b) => {
+  b.withIterations(100).withAction(() => {
+    return numbers.reduce((acc, n) => acc + n, 0);
+  });
+});
+```
+
+For custom scenarios, you can also use the exported `blackhole` helper directly:
+
+```javascript
+const { blackhole } = require('flexi-bench');
+
+benchmark('manual sink', (b) => {
+  b.withAction(() => {
+    const value = compute();
+    blackhole(value);
   });
 });
 ```

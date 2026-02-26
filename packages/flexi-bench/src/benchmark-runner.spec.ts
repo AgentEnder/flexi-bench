@@ -11,6 +11,7 @@ import {
   xsuite,
   xvariation,
 } from './benchmark-runner';
+import { getBlackholeChecksum, resetBlackhole } from './blackhole';
 import { NoopReporter } from './reporters/noop-reporter';
 
 const reporter = new NoopReporter();
@@ -29,6 +30,23 @@ describe('BenchmarkRunner', () => {
 
     expect(ran).toBe(5);
     expect(results).toHaveLength(1);
+  });
+
+  it('should consume callback action return values through blackhole', async () => {
+    resetBlackhole();
+    const before = getBlackholeChecksum();
+
+    await benchmark('Blackhole Benchmark', (b) =>
+      b
+        .withAction(() => {
+          return { value: Math.random() };
+        })
+        .withIterations(3)
+        .withReporter(reporter),
+    );
+
+    const after = getBlackholeChecksum();
+    expect(after).not.toBe(before);
   });
 
   it('should run suites', async () => {

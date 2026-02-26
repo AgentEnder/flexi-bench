@@ -14,5 +14,6 @@ export * from './performance-observer';
 export * from './measure';
 export * from './benchmark-runner';
 export * from './results';
+export * from './blackhole';
 export * from './utils/format';
 export * from './utils/types';
