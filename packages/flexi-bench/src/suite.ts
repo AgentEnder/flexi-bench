@@ -5,6 +5,7 @@ import {
   SuiteReporter,
 } from './api-types';
 import { Benchmark } from './benchmark';
+import { isCollectOnly, registerInstance } from './collect-mode';
 import { Measure } from './measure';
 import { SuiteConsoleReporter } from './reporters/suite-console-reporter';
 import { Result } from './results';
@@ -25,12 +26,19 @@ export class Suite {
   private shouldSetErrorStrategyOnBenchmarks = false;
 
   constructor(
-    private name: string,
+    public readonly name: string,
     options?: SuiteOptions,
   ) {
-    this.name = name;
     this.benchmarks = [];
     this.reporter = options?.reporter || new SuiteConsoleReporter();
+    registerInstance(this);
+  }
+
+  /**
+   * Returns the benchmarks registered in this suite.
+   */
+  getBenchmarks(): ReadonlyArray<Benchmark> {
+    return this.benchmarks;
   }
 
   addBenchmark(benchmark: Benchmark) {
@@ -88,6 +96,12 @@ export class Suite {
   }
 
   async run() {
+    if (isCollectOnly()) {
+      throw new Error(
+        `Cannot call .run() in collect-only mode. Use the CLI commands instead of calling .run() directly.`,
+      );
+    }
+
     this.reporter.setTotalBenchmarks?.(this.benchmarks.length);
     this.reporter.onSuiteStart?.(this.name);
 

@@ -12,6 +12,7 @@ import {
   PerformanceObserverOptions,
   PerformanceWatcher,
 } from './performance-observer';
+import { isCollectOnly, registerInstance } from './collect-mode';
 import { BenchmarkConsoleReporter } from './reporters/benchmark-console-reporter';
 import { blackhole } from './blackhole';
 import { calculateResultsFromDurations, Result } from './results';
@@ -61,6 +62,7 @@ export class Benchmark extends BenchmarkBase {
       this.timeout = options.timeout;
     }
     this.reporter = options?.reporter || new BenchmarkConsoleReporter();
+    registerInstance(this);
   }
 
   withVariation(
@@ -152,6 +154,12 @@ export class Benchmark extends BenchmarkBase {
   }
 
   async run() {
+    if (isCollectOnly()) {
+      throw new Error(
+        `Cannot call .run() in collect-only mode. Use the CLI commands instead of calling .run() directly.`,
+      );
+    }
+
     this.validate();
 
     let results: Result[] = [];

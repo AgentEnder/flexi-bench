@@ -1,11 +1,30 @@
 import { SetupMethod, TeardownMethod } from './api-types';
 import { Benchmark } from './benchmark';
+import { isCollectOnly } from './collect-mode';
 import { Measure } from './measure';
 import { Suite } from './suite';
 import { Lazy } from './utils/types';
 import { Variation } from './variation';
 
 const collectedLazys: Lazy<any>[] = [];
+
+let autoRunEnabled = true;
+
+/**
+ * Disables the automatic execution of collected benchmarks on process exit.
+ * Call this before loading benchmark files when you want to control execution manually.
+ */
+export function disableAutoRun(): void {
+  autoRunEnabled = false;
+}
+
+/**
+ * Returns and clears all collected lazys.
+ * Useful for the CLI to trigger DSL-registered suites/benchmarks manually.
+ */
+export function drainCollectedLazys(): Lazy<any>[] {
+  return collectedLazys.splice(0);
+}
 
 let activeSuite: Suite | null = null;
 
@@ -27,6 +46,9 @@ export function suite(
     const transformed = await fn(s);
     activeSuite = previousActiveSuite;
     const suiteToRun = transformed instanceof Suite ? transformed : s;
+    if (isCollectOnly()) {
+      return {} as any;
+    }
     return suiteToRun.run();
   });
   collectedLazys.push(lazy);
@@ -73,6 +95,10 @@ export function benchmark(
       activeBenchmark = previousActiveBenchmark;
       const benchmarkToUse =
         transformed instanceof Benchmark ? transformed : b;
+
+      if (isCollectOnly()) {
+        return [] as any;
+      }
 
       if (previousRunning) {
         await previousRunning;
@@ -270,6 +296,9 @@ export const xit = xbenchmark;
 export const xvariation: typeof variation = () => {};
 
 process.on('beforeExit', () => {
+  if (!autoRunEnabled || isCollectOnly()) {
+    return;
+  }
   const pending = collectedLazys.splice(0);
   if (pending.length > 0) {
     Promise.all(pending);
