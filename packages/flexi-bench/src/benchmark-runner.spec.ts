@@ -32,6 +32,45 @@ describe('BenchmarkRunner', () => {
     expect(results).toHaveLength(1);
   });
 
+  it('should run warmup iterations before measured iterations', async () => {
+    let ran = 0;
+    let results = await benchmark('Warmup Benchmark', (b) =>
+      b
+        .withAction(async () => {
+          ran++;
+        })
+        .withWarmupIterations(2)
+        .withIterations(5)
+        .withReporter(reporter),
+    );
+
+    expect(ran).toBe(7);
+    expect(results[0].iterations).toBe(5);
+    expect(results[0].raw).toHaveLength(5);
+  });
+
+  it('should allow variation warmup iterations to override benchmark warmup', async () => {
+    let ran = 0;
+    let results = await suite('Variation Warmup Suite', (s) => {
+      s.withReporter(reporter).withBenchmarkReporter(reporter);
+      benchmark('Variation Warmup Benchmark', (b) => {
+        b.withAction(() => {
+          ran++;
+        })
+          .withIterations(1)
+          .withWarmupIterations(2);
+
+        variation('override', (v) => v.withWarmupIterations(1));
+        variation('inherit', () => {});
+      });
+    });
+
+    expect(ran).toBe(5);
+    expect(results['Variation Warmup Benchmark']).toHaveLength(2);
+    expect(results['Variation Warmup Benchmark'][0].iterations).toBe(1);
+    expect(results['Variation Warmup Benchmark'][1].iterations).toBe(1);
+  });
+
   it('should consume callback action return values through blackhole', async () => {
     resetBlackhole();
     const before = getBlackholeChecksum();

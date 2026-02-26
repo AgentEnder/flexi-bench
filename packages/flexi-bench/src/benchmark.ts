@@ -36,6 +36,7 @@ export class Benchmark extends BenchmarkBase {
       teardown?: TeardownMethod;
       action?: Action;
       iterations?: number;
+      warmupIterations?: number;
       timeout?: number;
       reporter?: BenchmarkReporter;
     },
@@ -52,6 +53,9 @@ export class Benchmark extends BenchmarkBase {
     }
     if (options?.iterations) {
       this.iterations = options.iterations;
+    }
+    if (options?.warmupIterations !== undefined) {
+      this.warmupIterations = options.warmupIterations;
     }
     if (options?.timeout) {
       this.timeout = options.timeout;
@@ -103,6 +107,11 @@ export class Benchmark extends BenchmarkBase {
 
   withIterations(iterations: number): this {
     this.iterations = iterations;
+    return this;
+  }
+
+  withWarmupIterations(warmupIterations: number): this {
+    this.warmupIterations = warmupIterations;
     return this;
   }
 
@@ -183,6 +192,27 @@ export class Benchmark extends BenchmarkBase {
       const benchmarkThis = this;
       await new Promise<void>(async (resolve, reject) => {
         let completedIterations = 0;
+        const warmupIterations =
+          variation.warmupIterations ?? this.warmupIterations ?? 0;
+
+        for (let i = 0; i < warmupIterations; i++) {
+          for (const setup of this.setupEachMethods.concat(
+            variation.setupEachMethods,
+          )) {
+            await setup(variation);
+          }
+          const warmupError = await this.runWarmupAction(variation);
+          if (warmupError) {
+            reject(warmupError);
+            return;
+          }
+          for (const teardown of this.teardownEachMethods.concat(
+            variation.teardownEachMethods,
+          )) {
+            await teardown(variation);
+          }
+        }
+
         let timeout = benchmarkThis.timeout
           ? setTimeout(() => {
               running = false;
@@ -347,6 +377,16 @@ export class Benchmark extends BenchmarkBase {
     }
   }
 
+  private async runWarmupAction(variation: Variation): Promise<Error | void> {
+    try {
+      await this.runActionWithBlackhole(variation);
+    } catch (e) {
+      return e instanceof Error
+        ? e
+        : new Error('Unknown error during warmup action.');
+    }
+  }
+
   private async runActionWithBlackhole(variation: Variation): Promise<void> {
     const actionResult = await runAction(
       (variation.action ?? this.action)!,
@@ -359,12 +399,29 @@ export class Benchmark extends BenchmarkBase {
     if (!this.timeout && !this.iterations) {
       this.iterations = 5;
     }
+    if (
+      this.warmupIterations !== undefined &&
+      (!Number.isInteger(this.warmupIterations) || this.warmupIterations < 0)
+    ) {
+      throw new Error(
+        `Warmup iterations for benchmark "${this.name}" must be a non-negative integer.`,
+      );
+    }
     const missingActions = [];
     for (const variation of this.variations) {
       let action = variation.action || this.action;
       if (!action) {
         missingActions.push(variation.name);
         continue;
+      }
+      if (
+        variation.warmupIterations !== undefined &&
+        (!Number.isInteger(variation.warmupIterations) ||
+          variation.warmupIterations < 0)
+      ) {
+        throw new Error(
+          `Warmup iterations for variation "${variation.name}" in benchmark "${this.name}" must be a non-negative integer.`,
+        );
       }
       if (typeof action !== 'string' && variation.cliArgs.length > 0) {
         throw new Error(

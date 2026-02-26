@@ -11,6 +11,7 @@ export class BenchmarkBase {
   public teardownMethods: TeardownMethod[] = [];
   public teardownEachMethods: TeardownMethod[] = [];
   public action?: Action;
+  public warmupIterations?: number;
   public errorStrategy?: ErrorStrategy;
 
   withSetup(setup: SetupMethod): this {
@@ -35,6 +36,11 @@ export class BenchmarkBase {
 
   withAction(action: Action): this {
     this.action = action;
+    return this;
+  }
+
+  withWarmupIterations(warmupIterations: number): this {
+    this.warmupIterations = warmupIterations;
     return this;
   }
 

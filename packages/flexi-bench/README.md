@@ -20,6 +20,7 @@ pnpm add --save-dev flexi-bench
 
 - [Variations](#variations): Run the same benchmark with different configurations.
 - [Setup and Teardown](#setup-and-teardown): Run setup and teardown code before and after the benchmark.
+- [Warmup Iterations](#warmup-iterations): Run unmeasured warmups before timed iterations.
 - [Commands](#commands): Run simple commands as benchmarks.
 - [Blackhole Result Sink](#blackhole-result-sink): Prevent dead-code elimination for callback benchmarks.
 
@@ -152,6 +153,39 @@ const benchmark = new Benchmark('My Benchmark')
     // some teardown that is ran after each iteration of the benchmark
   });
 ```
+
+#### Warmup Iterations
+
+Warmups are iterations that run before measured iterations. They are useful for:
+
+- Warming JIT-compiled code paths
+- Warming caches and one-time initialization
+- Reducing "first iteration" distortion in reported numbers
+
+Use `.withWarmupIterations(count)` on a benchmark:
+
+```javascript
+benchmark('My Benchmark', (b) => {
+  b.withWarmupIterations(5).withIterations(20).withAction(() => {
+    doWork();
+  });
+});
+```
+
+You can also override warmups per variation:
+
+```javascript
+benchmark('My Benchmark', (b) => {
+  b.withWarmupIterations(5).withIterations(10).withAction((variation) => {
+    runImplementation(variation.name);
+  });
+
+  variation('hot-path', (v) => v.withWarmupIterations(10));
+  variation('cold-path', (v) => v.withWarmupIterations(2));
+});
+```
+
+Warmup iterations are not included in result stats (`min`, `max`, `average`, `p95`, `raw`, and `iterations`).
 
 #### Understanding Actions
 
