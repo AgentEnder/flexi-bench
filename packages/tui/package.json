@@ -1,0 +1,30 @@
+{
+  "name": "@flexi-bench/tui",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.lib.json",
+    "postinstall": "node -e \"const p=require('path'),f=require('fs'),d=p.join(require.resolve('node-pty'),'..','..','prebuilds');if(f.existsSync(d)){const r=(dir)=>{for(const e of f.readdirSync(dir,{withFileTypes:true})){const fp=p.join(dir,e.name);if(e.isDirectory())r(fp);else if(e.name==='spawn-helper')f.chmodSync(fp,0o755)}};r(d)}\""
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@xterm/headless": "^5.5.0",
+    "ink": "^5.1.0",
+    "ink-select-input": "^6.0.0",
+    "node-pty": "^1.0.0",
+    "react": "catalog:"
+  },
+  "peerDependencies": {
+    "flexi-bench": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.0",
+    "typescript": "catalog:"
+  },
+  "files": [
+    "dist",
+    "package.json"
+  ]
+}
